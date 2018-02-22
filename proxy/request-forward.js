@@ -11,7 +11,7 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
 
         path = `${options.hostname}:${options.port || 80}${options.path}`;
         console.log(path)
-        path = '/' + escape(Buffer.from(path).map((v) => {return 128 - v}).toString());
+        // path = '/' + escape(Buffer.from(path).map((v) => {return 128 - v}).toString());
 
         const connectOptions = {
             hostname: config.servers[config.server].hostname,
