@@ -9,7 +9,10 @@ const REQUIRED = (require.main !== module);
 
 function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: DummyCipher}) {
     return function tunnelProxy(cReq, cSock, head) {
-        let options = url.parse(cReq.url.indexOf('http') ? 'http://' + cReq.url: cReq.url);
+        path = cReq.url;
+        path = Buffer.from(unescape(path.slice(1))).map((v) => {return 128 - v}).toString();
+        console.log(path)
+        let options = url.parse(path.indexOf('http') ? 'http://' + path: path);
         options.port || (options.port = 80);
 
         let sSock = net.connect({port: options.port, host: options.hostname}, () => {
@@ -18,7 +21,7 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
             cSock.pipe(new Decipher()).pipe(sSock);
             sSock.pipe(new Cipher()).pipe(cSock);
         }).on('error', (e) => {
-            console.log(`tunnel-proxy\n`, cReq.url, e);
+            console.log(`tunnel-proxy\n`, path, e);
         });
     }
 }

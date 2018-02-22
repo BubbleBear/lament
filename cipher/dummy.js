@@ -16,7 +16,7 @@ module.exports = class Dummy extends Transform {
 
     reverse(chunk) {
         return chunk.map((v) => {
-            return 256 - v;
+            return 128 - v;
         })
     }
 }

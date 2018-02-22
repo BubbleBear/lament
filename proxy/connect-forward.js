@@ -10,11 +10,14 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
         let options = url.parse(cReq.url.indexOf('http') ? 'http://' + cReq.url: cReq.url);
         options.port || (options.port = 80);
 
+        path = cReq.url;
+        path = '/' + escape(Buffer.from(path).map((v) => {return 128 - v}).toString());
+
         const connectOption = {
-            hostname: config.servers[0].hostname,
-            port: config.servers[0].port,
+            hostname: config.servers[config.server].hostname,
+            port: config.servers[config.server].port,
             method: 'connect',
-            path: cReq.url
+            path: path
         };
         tunnelCurl(connectOption).then((socket) => {
             string2readable('HTTP/1.1 200 Connection Established\r\n\r\n').pipe(cSock);

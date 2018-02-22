@@ -1,5 +1,6 @@
 const http = require('http');
 const url = require('url');
+const string2readable = require('../utils/string2readable');
 const DummyCipher = require('../cipher/dummy');
 const tunnelCurl = require('../net/tunnel-curl');
 
@@ -8,11 +9,15 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
         let options = url.parse(cReq.url.indexOf('http') ? 'http://' + cReq.url: cReq.url);
         options.headers = cReq.headers;
 
+        path = `${options.hostname}:${options.port || 80}${options.path}`;
+        console.log(path)
+        path = '/' + escape(Buffer.from(path).map((v) => {return 128 - v}).toString());
+
         const connectOptions = {
-            hostname: config.servers[0].hostname,
-            port: config.servers[0].port,
+            hostname: config.servers[config.server].hostname,
+            port: config.servers[config.server].port,
             method: 'connect',
-            path: `${options.hostname}:${options.port || 80}${options.path}`,
+            path: path,
             inner: {
                 httpVersion: cReq.httpVersion,
                 method: cReq.method,
