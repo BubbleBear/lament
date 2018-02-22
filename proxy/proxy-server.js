@@ -1,9 +1,8 @@
 const http = require('http');
-const legacyProxyWrapper = require('./legacy-proxy');
 const tunnelProxyWrapper = require('./tunnel-proxy');
 
-const PROXY_PORT = 5555;
+global['config'] = require('../config');
 
 const server = http.createServer()
     .on('connect', tunnelProxyWrapper())
-    .listen(PROXY_PORT);
+    .listen(config.servers[0].port);

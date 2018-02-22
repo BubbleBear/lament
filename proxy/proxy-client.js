@@ -1,10 +1,10 @@
 const http = require('http');
-const legacyProxyWrapper = require('./legacy-proxy');
-const tunnelProxyWrapper = require('./tunnel-proxy');
+const requestForwardWrapper = require('./request-forward');
+const connectForwardWrapper = require('./connect-forward');
 
-const PROXY_PORT = 6666;
+global['config'] = require('../config');
 
 const server = http.createServer()
-    .on('connect', tunnelProxyWrapper())
-    .on('request', legacyProxyWrapper())
-    .listen(PROXY_PORT);
+    .on('request', requestForwardWrapper())
+    .on('connect', connectForwardWrapper())
+    .listen(config.client.port);

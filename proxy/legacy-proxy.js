@@ -10,26 +10,6 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
         let options = url.parse(cReq.url.indexOf('http') ? 'http://' + cReq.url: cReq.url);
         options.headers = cReq.headers;
 
-        if (REQUIRED) {
-            const connectOptions = {
-                hostname: 'localhost',
-                port: 5555,
-                method: 'connect',
-                path: `${options.hostname}:${options.port || 80}${options.path}`,
-                inner: {
-                    httpVersion: cReq.httpVersion,
-                    method: cReq.method,
-                    headers: options.headers,
-                    Cipher: Cipher
-                }
-            }
-            tunnelCurl(connectOptions).then((socket) => {
-                cReq.pipe(new Cipher(), {end: false}).pipe(socket);
-                socket.pipe(new Decipher).pipe(cRes.socket);
-            })
-            return;
-        }
-
         let sReq = http.request(options, (sRes) => {
             cRes.writeHead(sRes.statusCode, sRes.headers);
             sRes.pipe(new Decipher()).pipe(cRes);
