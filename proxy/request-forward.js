@@ -10,17 +10,17 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
         options.headers = cReq.headers;
 
         path = `${options.hostname}:${options.port || 80}${options.path}`;
-        console.log(path)
-        // path = '/' + escape(Buffer.from(path).map((v) => {return 128 - v}).toString());
+        cPath = encodeURI(Buffer.from(path).map((v) => {return 128 - v}).toString());
 
         const connectOptions = {
             hostname: config.servers[config.server].hostname,
             port: config.servers[config.server].port,
             method: 'connect',
-            path: path,
+            path: cPath,
             inner: {
                 httpVersion: cReq.httpVersion,
                 method: cReq.method,
+                path: path,
                 headers: options.headers,
                 Cipher: Cipher
             }

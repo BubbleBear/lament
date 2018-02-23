@@ -11,13 +11,13 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
         options.port || (options.port = 80);
 
         path = cReq.url;
-        // path = '/' + escape(Buffer.from(path).map((v) => {return 128 - v}).toString());
+        cPath = encodeURI(Buffer.from(path).map((v) => {return 128 - v}).toString());
 
         const connectOption = {
             hostname: config.servers[config.server].hostname,
             port: config.servers[config.server].port,
             method: 'connect',
-            path: path
+            path: cPath
         };
         tunnelCurl(connectOption).then((socket) => {
             string2readable('HTTP/1.1 200 Connection Established\r\n\r\n').pipe(cSock);

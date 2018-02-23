@@ -35,7 +35,7 @@ function curl(opts) {
 }
 
 function assembleHeaders(opts) {
-    const uri = url.parse('http://' + opts.path);
+    const uri = url.parse('http://' + opts.inner ? opts.inner.path : opts.path);
     const method = opts.inner && opts.inner.method ? opts.inner.method.toUpperCase() : 'GET';
     const httpVersion = opts.inner && opts.inner.httpVersion ? opts.inner.httpVersion : 1.1;
 
