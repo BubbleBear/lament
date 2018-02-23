@@ -5,4 +5,4 @@ global['config'] = require('../config');
 
 const server = http.createServer()
     .on('connect', tunnelProxyWrapper())
-    .listen(config.servers[0].port || 5555);
+    .listen(config.servers ? config.servers[0].port : 5555);
