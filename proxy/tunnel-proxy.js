@@ -10,7 +10,7 @@ const REQUIRED = (require.main !== module);
 function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: DummyCipher}) {
     return function tunnelProxy(cReq, cSock, head) {
         cPath = cReq.url;
-        path = Buffer.from(decodeURI(cPath)).map((v) => {return 128 - v}).toString();
+        path = Decipher.reverse(Buffer.from(cPath)).toString();
         let options = url.parse(path.indexOf('http') ? 'http://' + path: path);
         options.port || (options.port = 80);
 

@@ -10,13 +10,13 @@ module.exports = class Dummy extends Transform {
     }
 
     _transform(chunk, encoding, callback) {
-        this.push(this.reverse(chunk), encoding);
+        this.push(Dummy.reverse(chunk), encoding);
         callback();
     }
 
-    reverse(chunk) {
+    static reverse(chunk) {
         return chunk.map((v) => {
-            return 128 - v;
+            return v ^ 1;
         })
     }
 }

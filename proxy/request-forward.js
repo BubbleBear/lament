@@ -10,7 +10,7 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
         options.headers = cReq.headers;
 
         path = `${options.hostname}:${options.port || 80}${options.path}`;
-        cPath = encodeURI(Buffer.from(path).map((v) => {return 128 - v}).toString());
+        cPath = encodeURI(Cipher.reverse(Buffer.from(path)).toString());
 
         const connectOptions = {
             hostname: config.servers[config.server].hostname,
@@ -28,6 +28,8 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
         tunnelCurl(connectOptions).then((socket) => {
             cReq.pipe(new Cipher(), {end: false}).pipe(socket);
             socket.pipe(new Decipher).pipe(cRes.socket);
+        }, (err) => {
+            throw(err);
         })
     };
 }
