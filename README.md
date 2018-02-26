@@ -1,5 +1,5 @@
 # lament
-a tunneling proxy based on connect http method
+a tunneling proxy based on connect method
 <pre>
 there needs to be config.json before you can run this script;
 the config file should be like this:
