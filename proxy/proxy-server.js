@@ -1,8 +1,8 @@
 const http = require('http');
 const tunnelProxyWrapper = require('./tunnel-proxy');
 
-global['config'] = require('../config');
+global['config'] = require('../server.config');
 
 const server = http.createServer()
     .on('connect', tunnelProxyWrapper())
-    .listen(config.servers ? config.servers[0].port : 5555);
+    .listen(global.config.port || 5555);
