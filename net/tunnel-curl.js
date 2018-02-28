@@ -30,7 +30,7 @@ function curl(opts) {
             reject(err);
         });
 
-        req.end();
+        req.flushHeaders();
     })
 }
 
