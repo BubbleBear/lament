@@ -9,7 +9,7 @@ the config file should be like this:
   },
   "servers": [
     {
-      "host": some host,
+      "hostname": some hostname,
       "port": some port
     }
   ]
