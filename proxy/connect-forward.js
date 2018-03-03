@@ -25,7 +25,7 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
             cSock.pipe(new Cipher()).pipe(socket);
             socket.pipe(new Decipher()).pipe(cSock);
         }, (err) => {
-            console.log(err)
+            cSock.end();
         })
     }
 }

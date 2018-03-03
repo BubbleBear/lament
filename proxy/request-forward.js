@@ -29,7 +29,8 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
             cReq.pipe(new Cipher(), {end: false}).pipe(socket);
             socket.pipe(new Decipher).pipe(cRes.socket);
         }, (err) => {
-            // already handled in tunnelCurl
+            cRes.writeHead(400, err.message || err);
+            cRes.end();
         })
     };
 }

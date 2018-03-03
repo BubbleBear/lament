@@ -26,8 +26,12 @@ function curl(opts) {
                 }).once('end', () => {onend(chunks)});
             }
         }).on('error', err => {
-            console.log('error in tunnel-curl', err);
+            console.log('tunnel-curl error\n', err);
             reject(err);
+        }).setTimeout(3000, () => {
+            console.log('tunnel-curl timeout\n');
+            req.abort();
+            reject('timeout');
         });
 
         req.flushHeaders();

@@ -20,7 +20,13 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
             cSock.pipe(new Decipher()).pipe(sSock);
             sSock.pipe(new Cipher()).pipe(cSock);
         }).on('error', (e) => {
-            console.log(`tunnel-proxy\n`, path, e);
+            console.log(`tunnel-proxy error\n`, path, e);
+        }).on('end', () => {
+            sSock.end();
+        }).setTimeout(3000, () => {
+            sSock.end();
+            cSock.end();
+            console.log(`tunnel-proxy timeout\n`, path);
         });
     }
 }
