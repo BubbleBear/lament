@@ -1,7 +1,7 @@
 # lament
 a tunneling proxy based on connect method
 <pre>
-it's still a prototype and to be polished in future yet.
+it's still a prototype and to be polished in the future yet.
 
 before running the scripts you need to create 2 config files, one named
 client.config.json, another server.config.json.
@@ -11,7 +11,7 @@ in client.config.json there should be infomations like below:
         "port": some port
     },
     "servers": [{
-        "hostname": some hostname,
+        "host": some host,
         "port": some port
     }],
     "onuse": the index of server on use ,for example 0
