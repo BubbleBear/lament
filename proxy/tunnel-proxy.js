@@ -15,6 +15,7 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
         options.port || (options.port = 80);
 
         let sSock = net.connect({port: options.port, host: options.hostname}, () => {
+            sSock.removeAllListeners('timeout');
             string2readable('HTTP/1.1 200 Connection Established\r\n\r\n').pipe(cSock);
             string2readable(head).pipe(sSock);
             cSock.pipe(new Decipher()).pipe(sSock);
@@ -23,7 +24,7 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
             console.log(`tunnel-proxy error\n`, path, e);
         }).on('end', () => {
             sSock.end();
-        }).setTimeout(3000, () => {
+        }).setTimeout(5000, () => {
             sSock.end();
             cSock.end();
             console.log(`tunnel-proxy timeout\n`, path);

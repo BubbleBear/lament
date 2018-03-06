@@ -8,6 +8,7 @@ const REQUIRED = (require.main !== module);
 function curl(opts) {
     return new Promise((resolve, reject) => {
         const req = http.request(opts).on('connect', (res, sock, head) => {
+            req.removeAllListeners('timeout');
             resolve(sock)
             let chunks = [];
 
@@ -27,14 +28,14 @@ function curl(opts) {
             }
         }).on('error', err => {
             console.log('tunnel-curl error\n', err);
-            reject(err);
-        }).setTimeout(3000, () => {
-            console.log('tunnel-curl timeout\n');
+            reject('error');
+        }).setTimeout(5000, () => {
+            console.log('tunnel-curl timeout\n', opts.inner ? opts.inner.path : opts.path);
             req.abort();
             reject('timeout');
         });
 
-        req.flushHeaders();
+        req.end();
     })
 }
 
