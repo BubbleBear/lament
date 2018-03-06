@@ -11,7 +11,7 @@ in client.config.json there should be infomations like below:
         "port": some port
     },
     "servers": [{
-        "hostname": some hostname,
+        "host": some host,
         "port": some port
     }],
     "onuse": the index of server on use ,for example 0

@@ -13,7 +13,7 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
         cPath = encodeURI(Cipher.reverse(Buffer.from(path)).toString());
 
         const connectOptions = {
-            hostname: global.config.servers[global.config.onuse].hostname,
+            hostname: global.config.servers[global.config.onuse].host,
             port: global.config.servers[global.config.onuse].port,
             method: 'connect',
             path: cPath,
