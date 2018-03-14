@@ -9,7 +9,11 @@ function curl(opts) {
     return new Promise((resolve, reject) => {
         const req = http.request(opts).on('connect', (res, sock, head) => {
             req.removeAllListeners('timeout');
-            resolve(sock)
+            // hopefully it would fix the bug on windows
+            sock.on('error', err => {
+                console.log('sock error in tunnel-curl: ', err);
+            })
+            resolve(sock);
             let chunks = [];
 
             if (!REQUIRED || opts.inner) {
@@ -30,7 +34,7 @@ function curl(opts) {
             console.log('tunnel-curl error\n', err);
             reject('error');
         }).setTimeout(5000, () => {
-            console.log('tunnel-curl timeout\n', opts.inner ? opts.inner.path : opts.path);
+            console.log('tunnel-curl timeout\n');
             req.abort();
             reject('timeout');
         });
