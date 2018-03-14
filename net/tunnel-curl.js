@@ -24,7 +24,7 @@ function curl(opts) {
             if (!REQUIRED) {
                 sock.on('data', chunk => {
                     chunks.push(chunk);
-                }).once('end', () => {onend(chunks)});
+                }).once('end', () => {onend(chunks, req, res, sock)});
             }
         }).on('error', err => {
             console.log('tunnel-curl error\n', err);
@@ -35,7 +35,7 @@ function curl(opts) {
             reject('timeout');
         });
 
-        req.end();
+        req.flushHeaders();
     })
 }
 
@@ -60,7 +60,7 @@ function assembleHeaders(opts) {
 }
 
 // more like a test case
-function onend(chunks) {
+function onend(chunks, req, res, sock) {
     let buffer = Buffer.concat(chunks);
     let response = buffer.toString().split('\r\n\r\n');
     let headers = response[0].split('\r\n');
