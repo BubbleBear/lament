@@ -26,8 +26,6 @@ and in server.config.json:
 if the server config is an empty json, 5555 will be used as default port
 
 and then mv to the program directory, run
-'node proxy/proxy-server'
-on your server,
-'node proxy/proxy-client'
-on your local machine
+'node server.js' on your server,
+both 'node client.js' and 'node server.js' on your local machine
 </pre>
