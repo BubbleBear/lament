@@ -16,6 +16,7 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
 
         const sSock = net.connect({port: options.port, host: options.hostname}, () => {
             sSock.removeAllListeners('timeout');
+            sSock.setTimeout(10000);
             string2readable('HTTP/1.1 200 Connection Established\r\n\r\n').pipe(cSock);
             string2readable(head).pipe(sSock);
             cSock.pipe(new Decipher()).pipe(sSock);
