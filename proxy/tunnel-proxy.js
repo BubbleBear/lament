@@ -11,10 +11,10 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
     return function tunnelProxy(cReq, cSock, head) {
         cPath = cReq.url;
         path = Decipher.reverse(Buffer.from(decodeURI(cPath))).toString();
-        let options = url.parse(path.indexOf('http') ? 'http://' + path: path);
+        const options = url.parse(path.indexOf('http') ? 'http://' + path: path);
         options.port || (options.port = 80);
 
-        let sSock = net.connect({port: options.port, host: options.hostname}, () => {
+        const sSock = net.connect({port: options.port, host: options.hostname}, () => {
             sSock.removeAllListeners('timeout');
             string2readable('HTTP/1.1 200 Connection Established\r\n\r\n').pipe(cSock);
             string2readable(head).pipe(sSock);

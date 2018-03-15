@@ -6,13 +6,41 @@ const tunnelCurl = require('../net/tunnel-curl');
 
 function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: DummyCipher}) {
     return function legacyProxy(cReq, cRes) {
-        let options = url.parse(cReq.url.indexOf('http') ? 'http://' + cReq.url: cReq.url);
-        options.headers = cReq.headers;
+        const remoteOptions = assembleRemoteOptions(cReq);
+        const localOptions = Object.assign({}, remoteOptions);
+        localOptions.hostname = 'localhost';
+        
+        Promise.race([tunnelCurl(remoteOptions, 1), tunnelCurl(localOptions, 1)]).then((socket) => {
+            cReq.pipe(new Cipher(), {end: false}).pipe(socket);
+            socket.pipe(new Decipher).pipe(cRes.socket);
+        }, (err) => {
+            cRes.writeHead(400, err.message || err);
+            cRes.end();
+        }).catch(err => {
+            console.log(err);
+        });
+    };
 
+    function assembleOptions(cReq) {
+        const options = url.parse(cReq.url.indexOf('http') ? 'http://' + cReq.url: cReq.url);
+        options.headers = cReq.headers;
+        path = `${options.hostname}:${options.port || 80}${options.path}`;
+
+        return {
+            host: options.host,
+            method: 'connect',
+            path: path,
+            headers: options.headers
+        };
+    }
+
+    function assembleRemoteOptions(cReq) {
+        const options = url.parse(cReq.url.indexOf('http') ? 'http://' + cReq.url: cReq.url);
+        options.headers = cReq.headers;
         path = `${options.hostname}:${options.port || 80}${options.path}`;
         cPath = encodeURI(Cipher.reverse(Buffer.from(path)).toString());
 
-        const connectOptions = {
+        return {
             hostname: global.config.servers[global.config.onuse].host,
             port: global.config.servers[global.config.onuse].port,
             method: 'connect',
@@ -24,15 +52,8 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
                 headers: options.headers,
                 Cipher: Cipher
             }
-        }
-        tunnelCurl(connectOptions).then((socket) => {
-            cReq.pipe(new Cipher(), {end: false}).pipe(socket);
-            socket.pipe(new Decipher).pipe(cRes.socket);
-        }, (err) => {
-            cRes.writeHead(400, err.message || err);
-            cRes.end();
-        })
-    };
+        };
+    }
 }
 
 module.exports = proxyWrapper;

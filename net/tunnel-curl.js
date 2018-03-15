@@ -5,20 +5,16 @@ const string2readable = require('../utils/string2readable');
 
 const REQUIRED = (require.main !== module);
 
-function curl(opts) {
+function curl(opts, sendHeaders) {
     return new Promise((resolve, reject) => {
         const req = http.request(opts).on('connect', (res, sock, head) => {
             req.removeAllListeners('timeout');
-            // hopefully it would fix the bug on windows
-            sock.on('error', err => {
-                console.log('sock error in tunnel-curl: ', err);
-            })
             resolve(sock);
             let chunks = [];
 
-            if (!REQUIRED || opts.inner) {
+            if (!REQUIRED || sendHeaders) {
                 let headers = assembleHeaders(opts);
-                if (opts.inner.Cipher) {
+                if (opts.inner && opts.inner.Cipher) {
                     string2readable(headers).pipe(new opts.inner.Cipher()).pipe(sock);
                 } else {
                     string2readable(headers).pipe(sock);
@@ -44,9 +40,9 @@ function curl(opts) {
 }
 
 function assembleHeaders(opts) {
-    const uri = url.parse('http://' + opts.inner ? opts.inner.path : opts.path);
-    const method = opts.inner && opts.inner.method ? opts.inner.method.toUpperCase() : 'GET';
-    const httpVersion = opts.inner && opts.inner.httpVersion ? opts.inner.httpVersion : 1.1;
+    const uri = url.parse('http://' + (opts.inner && opts.inner.path || opts.path));
+    const method = opts.inner && opts.inner.method && opts.inner.method.toUpperCase() || 'GET';
+    const httpVersion = opts.inner && opts.inner.httpVersion || 1.1;
 
     // connection has to be close for now, which is to be optimized
     let headers = `${method} ${uri.path} HTTP/${httpVersion}\r\n` + 

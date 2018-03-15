@@ -1,7 +1,7 @@
 const http = require('http');
-const tunnelProxyWrapper = require('./tunnel-proxy');
+const tunnelProxyWrapper = require('./proxy/tunnel-proxy');
 
-global['config'] = require('../server.config');
+global['config'] = require('./server.config');
 
 const server = http.createServer()
     .on('connect', tunnelProxyWrapper())

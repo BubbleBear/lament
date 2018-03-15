@@ -1,8 +1,8 @@
 const http = require('http');
-const requestForwardWrapper = require('./request-forward');
-const connectForwardWrapper = require('./connect-forward');
+const requestForwardWrapper = require('./proxy/request-forward');
+const connectForwardWrapper = require('./proxy/connect-forward');
 
-global['config'] = require('../client.config');
+global['config'] = require('./client.config');
 
 const server = http.createServer()
     .on('request', requestForwardWrapper())
