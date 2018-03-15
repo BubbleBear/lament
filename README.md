@@ -1,6 +1,8 @@
 # lament
 a tunneling proxy based on connect method
 <pre>
+NOT STABLE ON WINDOWS PLATFORM YET!!
+
 it's still a prototype and to be polished in the future yet.
 
 before running the scripts you need to create 2 config files, one named
