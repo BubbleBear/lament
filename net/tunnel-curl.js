@@ -9,6 +9,9 @@ function curl(opts, sendHeaders) {
     return new Promise((resolve, reject) => {
         const req = http.request(opts).on('connect', (res, sock, head) => {
             req.removeAllListeners('timeout');
+            sock.on('error', err => {
+                console.log(`sock in tunnel-curl error:\n${err}`);
+            });
             resolve(sock);
             let chunks = [];
 
