@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+nohup node ./server.js>server.out 2>&1 &
+nohup node ./client.js>client.out 2>&1 &
+exit
