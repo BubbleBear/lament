@@ -21,14 +21,23 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
             cSock.pipe(new Decipher()).pipe(sSock);
             sSock.pipe(new Cipher()).pipe(cSock);
         }).on('error', (e) => {
-            console.log(`tunnel-proxy error\n`, path, e);
+            setTimeout(() => {
+                cSock.destroy(e);
+            }, 5000);
+            console.log(`tunnel-proxy sSock error\n`, path, e);
         }).on('end', () => {
-            sSock.end();
-        }).setTimeout(5000, () => {
-            sSock.end();
             cSock.end();
+        }).setTimeout(5000, () => {
+            cSock.destroy('timeout');
             console.log(`tunnel-proxy timeout\n`, path);
         });
+
+        cSock.on('error', (e) => {
+            sSock.connecting && sSock.destroy(e);
+            console.log(`tunnel-proxy cSock error\n`, path, e);
+        }).on('end', () => {
+            sSock.connecting && sSock.end();
+        })
     }
 }
 

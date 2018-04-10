@@ -7,7 +7,7 @@ const DummyCipher = require('../cipher/dummy');
 
 function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: DummyCipher}) {
     return function tunnelProxy(cReq, cSock, head) {
-        const remoteOptions = assembleRemoteOptions(cReq);
+        const remoteOptions = assembleOptions(cReq);
         const localOptions = Object.assign({}, remoteOptions);
         localOptions.hostname = 'localhost';
 
@@ -23,7 +23,7 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
         });
     }
 
-    function assembleRemoteOptions(cReq) {
+    function assembleOptions(cReq) {
         const options = url.parse(cReq.url.indexOf('http') ? 'http://' + cReq.url: cReq.url);
         options.port || (options.port = 80);
 

@@ -6,7 +6,7 @@ const tunnelCurl = require('../net/tunnel-curl');
 
 function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: DummyCipher}) {
     return function legacyProxy(cReq, cRes) {
-        const remoteOptions = assembleRemoteOptions(cReq);
+        const remoteOptions = assembleOptions(cReq);
         const localOptions = Object.assign({}, remoteOptions);
         localOptions.hostname = 'localhost';
         
@@ -22,19 +22,6 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
     };
 
     function assembleOptions(cReq) {
-        const options = url.parse(cReq.url.indexOf('http') ? 'http://' + cReq.url: cReq.url);
-        options.headers = cReq.headers;
-        path = `${options.hostname}:${options.port || 80}${options.path}`;
-
-        return {
-            host: options.host,
-            method: 'connect',
-            path: path,
-            headers: options.headers
-        };
-    }
-
-    function assembleRemoteOptions(cReq) {
         const options = url.parse(cReq.url.indexOf('http') ? 'http://' + cReq.url: cReq.url);
         options.headers = cReq.headers;
         path = `${options.hostname}:${options.port || 80}${options.path}`;
