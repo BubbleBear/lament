@@ -4,9 +4,9 @@ execPath=$(pwd)
 
 scriptPath=$(cd $(dirname $0); pwd)
 
-nohup node ../server.js>server.out 2>&1 &
-nohup node ../client.js>client.out 2>&1 &
+echo "$scriptPath/../server.js>server.out"
 
-cd $execPath
+nohup node "$scriptPath/../server.js">"$scriptPath/server.out" 2>&1 &
+nohup node "$scriptPath/../client.js">"$scriptPath/client.out" 2>&1 &
 
 exit
