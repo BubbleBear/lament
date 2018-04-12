@@ -1,6 +1,6 @@
 const http = require('http');
-const requestForwardWrapper = require('./proxy/request-forward');
-const connectForwardWrapper = require('./proxy/connect-forward');
+const requestForwardWrapper = require('./proxy/request_forward');
+const connectForwardWrapper = require('./proxy/connect_forward');
 
 global['config'] = require('./client.config');
 

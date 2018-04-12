@@ -2,7 +2,7 @@ const http = require('http');
 const url = require('url');
 const string2readable = require('../utils/string2readable');
 const DummyCipher = require('../cipher/dummy');
-const tunnelCurl = require('../net/tunnel-curl');
+const tunnelCurl = require('../net/tunnel_curl');
 
 function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: DummyCipher}) {
     return function legacyProxy(cReq, cRes) {

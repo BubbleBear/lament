@@ -2,7 +2,7 @@ const http = require('http');
 const net = require('net');
 const url = require('url');
 const string2readable = require('../utils/string2readable');
-const tunnelCurl = require('../net/tunnel-curl');
+const tunnelCurl = require('../net/tunnel_curl');
 const DummyCipher = require('../cipher/dummy');
 
 function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: DummyCipher}) {

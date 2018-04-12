@@ -1,7 +1,7 @@
 const http = require('http');
 const url = require('url');
 const DummyCipher = require('../cipher/dummy');
-const tunnelCurl = require('../net/tunnel-curl');
+const tunnelCurl = require('../net/tunnel_curl');
 
 const REQUIRED = (require.main !== module);
 

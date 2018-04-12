@@ -1,5 +1,5 @@
 const http = require('http');
-const tunnelProxyWrapper = require('./proxy/tunnel-proxy');
+const tunnelProxyWrapper = require('./proxy/tunnel_proxy');
 
 global['config'] = require('./server.config');
 

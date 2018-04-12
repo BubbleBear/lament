@@ -10,7 +10,7 @@ function curl(opts, sendHeaders) {
         const req = http.request(opts).on('connect', (res, sock, head) => {
             req.removeAllListeners('timeout');
             sock.on('error', err => {
-                console.log(`sock in tunnel-curl error:\n${err}`);
+                console.log(`sock in tunnel_curl error:\n${err}`);
             });
             resolve(sock);
             let chunks = [];
@@ -30,10 +30,10 @@ function curl(opts, sendHeaders) {
                 }).once('end', () => {onend(chunks, req, res, sock)});
             }
         }).on('error', err => {
-            console.log('tunnel-curl error\n', err);
+            console.log('tunnel_curl error\n', err);
             reject('error');
         }).setTimeout(5000, () => {
-            console.log('tunnel-curl timeout\n');
+            console.log('tunnel_curl timeout\n');
             req.abort();
             reject('timeout');
         });

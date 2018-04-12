@@ -2,7 +2,7 @@ const http = require('http');
 const net = require('net');
 const url = require('url');
 const string2readable = require('../utils/string2readable');
-const tunnelCurl = require('../net/tunnel-curl');
+const tunnelCurl = require('../net/tunnel_curl');
 const DummyCipher = require('../cipher/dummy');
 
 const REQUIRED = (require.main !== module);
@@ -24,17 +24,17 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
             setTimeout(() => {
                 cSock.destroy(e);
             }, 5000);
-            console.log(`tunnel-proxy sSock error\n`, path, e);
+            console.log(`tunnel_proxy sSock error\n`, path, e);
         }).on('end', () => {
             cSock.end();
         }).setTimeout(5000, () => {
             cSock.destroy('timeout');
-            console.log(`tunnel-proxy timeout\n`, path);
+            console.log(`tunnel_proxy timeout\n`, path);
         });
 
         cSock.on('error', (e) => {
             sSock.connecting && sSock.destroy(e);
-            console.log(`tunnel-proxy cSock error\n`, path, e);
+            console.log(`tunnel_proxy cSock error\n`, path, e);
         }).on('end', () => {
             sSock.connecting && sSock.end();
         })
