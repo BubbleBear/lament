@@ -8,7 +8,8 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
     return function legacyProxy(cReq, cRes) {
         const remoteOptions = assembleOptions(cReq);
         const localOptions = Object.assign({}, remoteOptions);
-        localOptions.hostname = 'localhost';
+        localOptions.hostname = global.config.servers[0].host;
+        localOptions.port = global.config.servers[0].port;
         
         Promise.race([tunnelCurl(remoteOptions, 1), tunnelCurl(localOptions, 1)]).then((socket) => {
             cReq.pipe(new Cipher(), {end: false}).pipe(socket);

@@ -9,7 +9,8 @@ function proxyWrapper({Cipher, Decipher} = {Cipher: DummyCipher, Decipher: Dummy
     return function tunnelProxy(cReq, cSock, head) {
         const remoteOptions = assembleOptions(cReq);
         const localOptions = Object.assign({}, remoteOptions);
-        localOptions.hostname = 'localhost';
+        localOptions.hostname = global.config.servers[0].host;
+        localOptions.port = global.config.servers[0].port;
 
         Promise.race([tunnelCurl(remoteOptions), tunnelCurl(localOptions)]).then((socket) => {
             string2readable('HTTP/1.1 200 Connection Established\r\n\r\n').pipe(cSock);
