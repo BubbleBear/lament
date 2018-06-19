@@ -1,7 +1,7 @@
 const http = require('http');
 const zlib = require('zlib');
 const url = require('url');
-const string2readable = require('../utils/string2readable');
+const string2readable = require('./string2readable');
 
 const REQUIRED = (require.main !== module);
 

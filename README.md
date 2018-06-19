@@ -6,8 +6,8 @@ NOT STABLE ON WINDOWS PLATFORM YET!!
 it's still a prototype and to be polished in the future yet.
 
 before running the scripts you need to create 2 config files, one named
-client.config.json, another server.config.json.
-in client.config.json there should be infomations like below:
+config/client.json, another config/server.json.
+in config/client.json there should be infomations like below:
 {
     "client": {
         "port": some port
@@ -19,7 +19,7 @@ in client.config.json there should be infomations like below:
     "onuse": the index of server on use ,for example 0
 }
 
-and in server.config.json:
+and in config/server.json:
 {
     "port": some port
 }

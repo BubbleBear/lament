@@ -1,0 +1,29 @@
+{
+  "name": "lament",
+  "version": "1.0.0",
+  "description": "a tunneling proxy based on connect method <pre> NOT STABLE ON WINDOWS PLATFORM YET!!",
+  "main": "client.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "supervisor -w src,config -e ts,js,json -x ts-node -- src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BubbleBear/lament.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BubbleBear/lament/issues"
+  },
+  "homepage": "https://github.com/BubbleBear/lament#readme",
+  "devDependencies": {
+    "@types/node": "^10.3.4",
+    "supervisor": "^0.12.0",
+    "ts-node": "^6.1.1",
+    "typescript": "^2.9.2"
+  }
+}

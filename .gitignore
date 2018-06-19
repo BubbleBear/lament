@@ -1,2 +1,3 @@
 *config.json
 *.out
+node_modules/
