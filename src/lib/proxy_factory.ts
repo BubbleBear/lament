@@ -3,7 +3,6 @@ import * as net from 'net';
 import { parse } from 'url';
 import { Transform } from 'stream';
 import string2readable = require('./string2readable');
-import tunnelCurl = require('./tunnel_curl');
 import DummyCipher = require('./dummy');
 
 export default class ProxyFactory {
@@ -21,71 +20,64 @@ export default class ProxyFactory {
     }
 
     public getLegacyProxy() {
-        return (cReq, cRes) => {
+        return (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
             const remoteOptions = this.assembleOptions(cReq);
             const localOptions = Object.assign({}, remoteOptions);
             localOptions.hostname = 'localhost';
             localOptions.port = this.config.server.port || 5555;
             
-            Promise.race([tunnelCurl(remoteOptions, 1), tunnelCurl(localOptions, 1)]).then((socket) => {
+            Promise.race([this.connect(remoteOptions, 1), this.connect(localOptions, 1)]).then((socket: net.Socket) => {
                 cReq.pipe(new this.Cipher(), {end: false}).pipe(socket);
-                socket.pipe(new this.Decipher).pipe(cRes.socket);
+                socket.pipe(new this.Decipher).pipe(cRes.connection);
             }, (err) => {
-                cRes.writeHead(400, err.message || err);
+                cRes.writeHead(400, err.message || 'unknown error');
                 cRes.end();
-            }).catch(err => {
-                console.log(err);
-            });
+            }).catch(err => {});
         };
     }
 
     public getTunnelProxy() {
-        return (cReq, cSock, head) => {
+        return (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             const remoteOptions = this.assembleOptions(cReq);
             const localOptions = Object.assign({}, remoteOptions);
             localOptions.hostname = 'localhost';
             localOptions.port = this.config.server.port || 5555;
     
-            Promise.race([tunnelCurl(remoteOptions), tunnelCurl(localOptions)]).then((socket) => {
-                string2readable('HTTP/1.1 200 Connection Established\r\n\r\n').pipe(cSock);
-                string2readable(head).pipe(socket);
+            Promise.race([this.connect(remoteOptions), this.connect(localOptions)]).then((socket: net.Socket) => {
+                cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+                socket.write(head);
                 cSock.pipe(new this.Cipher(), {end: false}).pipe(socket);
                 socket.pipe(new this.Decipher()).pipe(cSock);
             }, (err) => {
                 cSock.end();
-            }).catch(err => {
-                console.log(err);
-            });
+            }).catch(err => {});
         }
     }
 
     public getServerProxy() {
-        return (cReq, cSock, head) => {
+        return (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             const encodedPath = cReq.url;
             const path = this.reverse(Buffer.from(decodeURI(encodedPath))).toString();
             const options = parse(path.indexOf('http') ? 'http://' + path: path);
     
             const sSock = net.connect(Number(options.port) || 80, options.hostname, () => {
                 sSock.removeAllListeners('timeout');
-                string2readable('HTTP/1.1 200 Connection Established\r\n\r\n').pipe(cSock);
-                string2readable(head).pipe(sSock);
+                cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+                sSock.write(head);
                 cSock.pipe(new this.Decipher()).pipe(sSock);
                 sSock.pipe(new this.Cipher()).pipe(cSock);
             }).on('error', (e) => {
                 setTimeout(() => {
                     cSock.destroy(e);
                 }, 5000);
-                console.log(`tunnel_proxy sSock error\n`, path, e);
             }).on('end', () => {
                 cSock.end();
             }).setTimeout(5000, () => {
                 cSock.destroy(new Error('timeout'));
-                console.log(`tunnel_proxy timeout\n`, path);
             });
     
             cSock.on('error', (e) => {
                 sSock.connecting && sSock.destroy(e);
-                console.log(`tunnel_proxy cSock error\n`, path, e);
             }).on('end', () => {
                 sSock.connecting && sSock.end();
             })
@@ -110,6 +102,52 @@ export default class ProxyFactory {
                 Cipher: this.Cipher
             }
         };
+    }
+
+    private assembleHeaders(opts) {
+        const uri = parse('http://' + (opts.inner && opts.inner.path || opts.path));
+        const method = opts.inner && opts.inner.method && opts.inner.method.toUpperCase() || 'GET';
+        const httpVersion = opts.inner && opts.inner.httpVersion || 1.1;
+    
+        // connection has to be close for now, which is to be optimized
+        let headers = `${method} ${uri.path} HTTP/${httpVersion}\r\n` + 
+                    `connection: close\r\n`;
+        opts.inner && opts.inner.headers.host || (headers += `host: ${uri.host}\r\n`);
+    
+        if (opts.inner && opts.inner.headers) {
+            for (const k in opts.inner.headers) {
+                if (k.includes('connection')) continue;
+                headers += `${k}: ${opts.inner.headers[k]}\r\n`
+            }
+        }
+        headers += '\r\n';
+        return headers;
+    }
+
+    private connect(options, sendHeaders?) {
+        return new Promise((resolve, reject) => {
+            const request = http.request(options)
+            .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
+                request.removeAllListeners('timeout');
+                sock.on('error', err => {
+                    console.log('server side error', err);
+                });
+                resolve(sock);
+
+                if (sendHeaders) {
+                    let headers = this.assembleHeaders(options);
+                    string2readable(headers).pipe(new options.inner.Cipher()).pipe(sock);
+                }
+            }).on('error', err => {
+                console.log(err)
+                reject(err);
+            }).setTimeout(5000, () => {
+                request.abort();
+                reject(new Error('timeout'));
+            });
+
+            request.flushHeaders();
+        });
     }
 
     private reverse(chunk) {
