@@ -2,9 +2,17 @@ import * as http from 'http';
 import ProxyFacotry from './lib/proxy_factory';
 
 const config = {
-    client: require('../config/client.json'),
-    server: require('../config/server.json'),
+    client: null,
+    server: null,
 };
+
+try {
+    config.client = require('../config/client.json');
+} catch (e) {}
+
+try {
+    config.server = require('../config/server.json');
+} catch (e) {}
 
 const proxyFacotry = new ProxyFacotry(config);
 
