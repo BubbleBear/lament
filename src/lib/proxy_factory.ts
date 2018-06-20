@@ -20,7 +20,7 @@ export default class ProxyFactory {
     }
 
     public getLegacyProxy() {
-        return (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
+        return async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
             const remoteOptions = this.assembleOptions(cReq);
             const localOptions = Object.assign({}, remoteOptions);
             localOptions.hostname = 'localhost';
@@ -37,7 +37,7 @@ export default class ProxyFactory {
     }
 
     public getTunnelProxy() {
-        return (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
+        return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             const remoteOptions = this.assembleOptions(cReq);
             const localOptions = Object.assign({}, remoteOptions);
             localOptions.hostname = 'localhost';
@@ -55,9 +55,9 @@ export default class ProxyFactory {
     }
 
     public getServerProxy() {
-        return (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
+        return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             const encodedPath = cReq.url;
-            const path = this.reverse(Buffer.from(decodeURI(encodedPath))).toString();
+            const path = this.reverse(Buffer.from(encodedPath)).toString();
             const options = parse(path.indexOf('http') ? 'http://' + path: path);
     
             const sSock = net.connect(Number(options.port) || 80, options.hostname, () => {
@@ -86,7 +86,7 @@ export default class ProxyFactory {
 
     private assembleOptions(cReq) {
         const path = cReq.url.replace(/^http:\/\//, '');
-        const encodedPath = encodeURI(this.reverse(Buffer.from(path)).toString());
+        const encodedPath = this.reverse(Buffer.from(path)).toString();
         const clientConfig = this.config.client;
 
         return {
