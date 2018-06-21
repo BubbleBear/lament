@@ -103,26 +103,6 @@ export default class ProxyFactory {
         };
     }
 
-    private assembleHeaders(opts) {
-        const uri = parse('http://' + (opts.inner && opts.inner.path || opts.path));
-        const method = opts.inner && opts.inner.method && opts.inner.method.toUpperCase() || 'GET';
-        const httpVersion = opts.inner && opts.inner.httpVersion || 1.1;
-    
-        // connection has to be close for now, which is to be optimized
-        let headers = `${method} ${uri.path} HTTP/${httpVersion}\r\n` + 
-                    `connection: close\r\n`;
-        opts.inner && opts.inner.headers.host || (headers += `host: ${uri.host}\r\n`);
-    
-        if (opts.inner && opts.inner.headers) {
-            for (const k in opts.inner.headers) {
-                if (k.includes('connection')) continue;
-                headers += `${k}: ${opts.inner.headers[k]}\r\n`
-            }
-        }
-        headers += '\r\n';
-        return headers;
-    }
-
     private connect(options, sendHeaders?) {
         return new Promise((resolve, reject) => {
             const request = http.request(options)
@@ -148,9 +128,23 @@ export default class ProxyFactory {
         });
     }
 
-    private reverse(chunk) {
-        return chunk.map((v) => {
-            return v ^ 1;
-        })
+    private assembleHeaders(opts) {
+        const uri = parse('http://' + (opts.inner && opts.inner.path || opts.path));
+        const method = opts.inner && opts.inner.method && opts.inner.method.toUpperCase() || 'GET';
+        const httpVersion = opts.inner && opts.inner.httpVersion || 1.1;
+    
+        // connection has to be close for now, which is to be optimized
+        let headers = `${method} ${uri.path} HTTP/${httpVersion}\r\n` + 
+                    `connection: close\r\n`;
+        opts.inner && opts.inner.headers.host || (headers += `host: ${uri.host}\r\n`);
+    
+        if (opts.inner && opts.inner.headers) {
+            for (const k in opts.inner.headers) {
+                if (k.includes('connection')) continue;
+                headers += `${k}: ${opts.inner.headers[k]}\r\n`
+            }
+        }
+        headers += '\r\n';
+        return headers;
     }
 }
