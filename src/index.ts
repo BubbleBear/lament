@@ -1,26 +1,8 @@
 import * as http from 'http';
 import ProxyFacotry from './lib/proxy_factory';
+import Config from './lib/config';
 
-const config = {
-    client: null,
-    server: null,
-};
-
-try {
-    config.client = require('../config/client.json');
-} catch (e) {
-    config.client = {
-        listen: 6666,
-    };
-}
-
-try {
-    config.server = require('../config/server.json');
-} catch (e) {
-    config.server = {
-        listen: 5555,
-    };
-}
+const config: any = new Config;
 
 const proxyFacotry = new ProxyFacotry(config);
 
@@ -38,17 +20,3 @@ export const client = http.createServer()
         console.log(err);
     })
     .listen(config.client.listen);
-
-class Config {
-    private config;
-
-    constructor() {
-        this.config
-    }
-
-    private default() {
-        return {
-
-        }
-    }
-}
