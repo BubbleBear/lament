@@ -22,11 +22,13 @@ export default class ProxyFactory {
     public getLegacyProxy() {
         return async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
             const remoteOptions = this.assembleOptions(cReq);
-            const localOptions = Object.assign({}, remoteOptions);
-            localOptions.hostname = 'localhost';
-            localOptions.port = this.config.server.port || 5555;
-            
-            Promise.race([this.connect(remoteOptions, 1), this.connect(localOptions, 1)]).then((socket: net.Socket) => {
+            const localOptions = this.assembleOptions(cReq, true);
+
+            const connectList = [];
+            remoteOptions && connectList.push(remoteOptions);
+            localOptions && connectList.push(localOptions);
+
+            Promise.race(connectList.map(v => this.connect(v, 1))).then((socket: net.Socket) => {
                 cReq.pipe(new this.Cipher, {end: false}).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             }, (err) => {
@@ -39,11 +41,13 @@ export default class ProxyFactory {
     public getTunnelProxy() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             const remoteOptions = this.assembleOptions(cReq);
-            const localOptions = Object.assign({}, remoteOptions);
-            localOptions.hostname = 'localhost';
-            localOptions.port = this.config.server.port || 5555;
+            const localOptions = this.assembleOptions(cReq, true);
+
+            const connectList = [];
+            remoteOptions && connectList.push(remoteOptions);
+            localOptions && connectList.push(localOptions);
     
-            Promise.race([this.connect(remoteOptions), this.connect(localOptions)]).then((socket: net.Socket) => {
+            Promise.race(connectList.map(v => this.connect(v))).then((socket: net.Socket) => {
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
                 cSock.pipe(new this.Cipher, {end: false}).pipe(socket);
@@ -77,6 +81,7 @@ export default class ProxyFactory {
             });
     
             cSock.on('error', (e) => {
+                console.log(e)
                 sSock.connecting && sSock.destroy(e);
             }).on('end', () => {
                 sSock.connecting && sSock.end();
@@ -84,23 +89,25 @@ export default class ProxyFactory {
         }
     }
 
-    private assembleOptions(cReq) {
+    private assembleOptions(cReq: http.IncomingMessage, local?: Boolean) {
         const path = cReq.url.replace(/^http:\/\//, '');
         const encodedPath = (new this.Cipher).encode(path);
         const clientConfig = this.config.client;
 
-        return {
-            hostname: clientConfig.remote[clientConfig.onuse].host,
-            port: clientConfig.remote[clientConfig.onuse].port,
-            method: 'connect',
-            path: encodedPath,
-            inner: {
-                httpVersion: cReq.httpVersion,
-                method: cReq.method,
-                path: path,
-                headers: cReq.headers
-            }
-        };
+        try {
+            return {
+                hostname: local ? 'localhost' : clientConfig.remote[clientConfig.onuse].host,
+                port: local ? this.config.server.port || 5555 : clientConfig.remote[clientConfig.onuse].port,
+                method: 'connect',
+                path: encodedPath,
+                inner: {
+                    httpVersion: cReq.httpVersion,
+                    method: cReq.method,
+                    path: path,
+                    headers: cReq.headers
+                }
+            };
+        } catch (e) {}
     }
 
     private connect(options, sendHeaders?) {

@@ -8,11 +8,21 @@ const config = {
 
 try {
     config.client = require('../config/client.json');
-} catch (e) {}
+} catch (e) {
+    config.client = {
+        local: {
+            port: 6666,
+        },
+    };
+}
 
 try {
     config.server = require('../config/server.json');
-} catch (e) {}
+} catch (e) {
+    config.server = {
+        port: 5555,
+    };
+}
 
 const proxyFacotry = new ProxyFacotry(config);
 
@@ -21,7 +31,7 @@ export const server = http.createServer()
     .on('error', err => {
         console.log(err);
     })
-    .listen(config.server.port || 5555);
+    .listen(config.server.port);
 
 export const client = http.createServer()
     .on('request', proxyFacotry.getLegacyProxy())
