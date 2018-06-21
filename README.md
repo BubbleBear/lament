@@ -9,10 +9,8 @@ before running the scripts you need to create 2 config files, one named
 config/client.json, another config/server.json.
 in config/client.json there should be infomations like below:
 {
-    "client": {
-        "port": some port
-    },
-    "servers": [{
+    "listen": some port,
+    "remotes": [{
         "host": some host,
         "port": some port
     }],
@@ -21,7 +19,7 @@ in config/client.json there should be infomations like below:
 
 and in config/server.json:
 {
-    "port": some port
+    "listen": some port
 }
 if the server config is an empty json, 5555 will be used as default port
 

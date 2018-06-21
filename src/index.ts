@@ -10,9 +10,7 @@ try {
     config.client = require('../config/client.json');
 } catch (e) {
     config.client = {
-        local: {
-            port: 6666,
-        },
+        listen: 6666,
     };
 }
 
@@ -20,7 +18,7 @@ try {
     config.server = require('../config/server.json');
 } catch (e) {
     config.server = {
-        port: 5555,
+        listen: 5555,
     };
 }
 
@@ -31,7 +29,7 @@ export const server = http.createServer()
     .on('error', err => {
         console.log(err);
     })
-    .listen(config.server.port);
+    .listen(config.server.listen);
 
 export const client = http.createServer()
     .on('request', proxyFacotry.getLegacyProxy())
@@ -39,4 +37,18 @@ export const client = http.createServer()
     .on('error', err => {
         console.log(err);
     })
-    .listen(config.client.local.port);
+    .listen(config.client.listen);
+
+class Config {
+    private config;
+
+    constructor() {
+        this.config
+    }
+
+    private default() {
+        return {
+
+        }
+    }
+}

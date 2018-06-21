@@ -96,8 +96,8 @@ export default class ProxyFactory {
 
         try {
             return {
-                hostname: local ? 'localhost' : clientConfig.remote[clientConfig.onuse].host,
-                port: local ? this.config.server.port || 5555 : clientConfig.remote[clientConfig.onuse].port,
+                hostname: local ? 'localhost' : clientConfig.remotes[clientConfig.onuse].host,
+                port: local ? this.config.server.listen || 5555 : clientConfig.remotes[clientConfig.onuse].port,
                 method: 'connect',
                 path: encodedPath,
                 inner: {
