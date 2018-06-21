@@ -3,20 +3,20 @@ import * as net from 'net';
 import { parse } from 'url';
 import { Transform } from 'stream';
 import string2readable = require('./string2readable');
-import DummyCipher = require('./dummy');
+import { DummyCipher, DummyDecipher } from './dummy';
 
 export default class ProxyFactory {
     private config;
 
-    private Cipher: typeof Transform;
+    private Cipher: typeof DummyCipher;
 
-    private Decipher: typeof Transform;
+    private Decipher: typeof DummyDecipher;
 
     constructor(config, options?) {
         options || (options = {});
         this.config = config;
         this.Cipher = options.Cipher || DummyCipher;
-        this.Decipher = options.Decipher || DummyCipher;
+        this.Decipher = options.Decipher || DummyDecipher;
     }
 
     public getLegacyProxy() {
@@ -27,7 +27,7 @@ export default class ProxyFactory {
             localOptions.port = this.config.server.port || 5555;
             
             Promise.race([this.connect(remoteOptions, 1), this.connect(localOptions, 1)]).then((socket: net.Socket) => {
-                cReq.pipe(new this.Cipher(), {end: false}).pipe(socket);
+                cReq.pipe(new this.Cipher, {end: false}).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             }, (err) => {
                 cRes.writeHead(400, err.message || 'unknown error');
@@ -46,8 +46,8 @@ export default class ProxyFactory {
             Promise.race([this.connect(remoteOptions), this.connect(localOptions)]).then((socket: net.Socket) => {
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
-                cSock.pipe(new this.Cipher(), {end: false}).pipe(socket);
-                socket.pipe(new this.Decipher()).pipe(cSock);
+                cSock.pipe(new this.Cipher, {end: false}).pipe(socket);
+                socket.pipe(new this.Decipher).pipe(cSock);
             }, (err) => {
                 cSock.end();
             }).catch(err => {});
@@ -57,15 +57,15 @@ export default class ProxyFactory {
     public getServerProxy() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             const encodedPath = cReq.url;
-            const path = this.reverse(Buffer.from(encodedPath)).toString();
+            const path = (new this.Decipher).decode(encodedPath);
             const options = parse(path.indexOf('http') ? 'http://' + path: path);
     
             const sSock = net.connect(Number(options.port) || 80, options.hostname, () => {
                 sSock.removeAllListeners('timeout');
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 sSock.write(head);
-                cSock.pipe(new this.Decipher()).pipe(sSock);
-                sSock.pipe(new this.Cipher()).pipe(cSock);
+                cSock.pipe(new this.Decipher).pipe(sSock);
+                sSock.pipe(new this.Cipher).pipe(cSock);
             }).on('error', (e) => {
                 setTimeout(() => {
                     cSock.destroy(e);
@@ -86,7 +86,7 @@ export default class ProxyFactory {
 
     private assembleOptions(cReq) {
         const path = cReq.url.replace(/^http:\/\//, '');
-        const encodedPath = this.reverse(Buffer.from(path)).toString();
+        const encodedPath = (new this.Cipher).encode(path);
         const clientConfig = this.config.client;
 
         return {
@@ -98,8 +98,7 @@ export default class ProxyFactory {
                 httpVersion: cReq.httpVersion,
                 method: cReq.method,
                 path: path,
-                headers: cReq.headers,
-                Cipher: this.Cipher
+                headers: cReq.headers
             }
         };
     }
@@ -136,10 +135,9 @@ export default class ProxyFactory {
 
                 if (sendHeaders) {
                     let headers = this.assembleHeaders(options);
-                    string2readable(headers).pipe(new options.inner.Cipher()).pipe(sock);
+                    string2readable(headers).pipe(new this.Cipher).pipe(sock);
                 }
             }).on('error', err => {
-                console.log(err)
                 reject(err);
             }).setTimeout(5000, () => {
                 request.abort();

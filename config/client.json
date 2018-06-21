@@ -4,8 +4,8 @@
     },
     "remote": [
         {
-            "host": "150.109.47.163",
-            "port": 5556
+            "host": "localhost",
+            "port": 5555
         }
     ],
     "onuse": 0
