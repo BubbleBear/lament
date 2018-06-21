@@ -2,7 +2,7 @@ import * as http from 'http';
 import * as net from 'net';
 import { parse } from 'url';
 import { Transform } from 'stream';
-import string2readable = require('./string2readable');
+import { string2readable, promise } from './utils';
 import { DummyCipher, DummyDecipher } from './dummy';
 
 export default class ProxyFactory {
@@ -28,7 +28,7 @@ export default class ProxyFactory {
             remoteOptions && connectList.push(remoteOptions);
             localOptions && connectList.push(localOptions);
 
-            Promise.race(connectList.map(v => this.connect(v, 1))).then((socket: net.Socket) => {
+            promise.shortCircuit(connectList.map(v => this.connect(v, 1))).then((socket: net.Socket) => {
                 cReq.pipe(new this.Cipher, {end: false}).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             }, (err) => {
@@ -47,7 +47,7 @@ export default class ProxyFactory {
             remoteOptions && connectList.push(remoteOptions);
             localOptions && connectList.push(localOptions);
     
-            Promise.race(connectList.map(v => this.connect(v))).then((socket: net.Socket) => {
+            promise.shortCircuit(connectList.map(v => this.connect(v))).then((socket: net.Socket) => {
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
                 cSock.pipe(new this.Cipher, {end: false}).pipe(socket);
