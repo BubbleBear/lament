@@ -114,7 +114,7 @@ export default class ProxyFactory {
                 resolve(sock);
                 request.removeAllListeners('timeout');
                 sock.on('error', err => {
-                    console.log('server side error', err);
+                    console.log('connect error', err);
                 });
 
                 if (sendHeaders) {
@@ -124,7 +124,7 @@ export default class ProxyFactory {
             }).on('error', err => {
                 reject(err);
             }).setTimeout(5000, () => {
-                reject(new Error('client timeout'));
+                request.emit('error', new Error('client timeout'));
                 request.abort();
             });
 
