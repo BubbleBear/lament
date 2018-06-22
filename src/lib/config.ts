@@ -19,12 +19,12 @@ export default class Config {
     private importConfig() {
         const config = {};
         try {
-            (<any>config).client = require('../config/client.json');
+            (<any>config).client = require('../../config/client.json');
         } catch (e) {
             console.log('failed to load client config, using default.');
         }
         try {
-            (<any>config).server = require('../config/server.json');
+            (<any>config).server = require('../../config/server.json');
         } catch (e) {
             console.log('failed to load server config, using default.');
         }

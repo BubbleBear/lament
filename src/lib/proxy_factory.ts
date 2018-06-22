@@ -31,10 +31,10 @@ export default class ProxyFactory {
             promise.shortCircuit(connectList.map(v => this.connect(v, 1))).then((socket: net.Socket) => {
                 cReq.pipe(new this.Cipher, {end: false}).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
-            }, (err) => {
-                cRes.writeHead(400, err.message || 'unknown error');
+            }).catch(err => {
+                cRes.writeHead(400, err.message || 'unknown error with lament');
                 cRes.end();
-            }).catch(err => {});
+            });
         };
     }
 
@@ -52,9 +52,9 @@ export default class ProxyFactory {
                 socket.write(head);
                 cSock.pipe(new this.Cipher, {end: false}).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cSock);
-            }, (err) => {
+            }).catch(err => {
                 cSock.end();
-            }).catch(err => {});
+            });
         }
     }
 
@@ -71,17 +71,14 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Decipher).pipe(sSock);
                 sSock.pipe(new this.Cipher).pipe(cSock);
             }).on('error', (e) => {
-                setTimeout(() => {
-                    cSock.destroy(e);
-                }, 5000);
+                cSock.destroy(e);
             }).on('end', () => {
                 cSock.end();
             }).setTimeout(5000, () => {
-                cSock.destroy(new Error('timeout'));
+                cSock.destroy(new Error('server timeout'));
             });
     
             cSock.on('error', (e) => {
-                console.log(e)
                 sSock.connecting && sSock.destroy(e);
             }).on('end', () => {
                 sSock.connecting && sSock.end();
@@ -114,11 +111,11 @@ export default class ProxyFactory {
         return new Promise((resolve, reject) => {
             const request = http.request(options)
             .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
+                resolve(sock);
                 request.removeAllListeners('timeout');
                 sock.on('error', err => {
                     console.log('server side error', err);
                 });
-                resolve(sock);
 
                 if (sendHeaders) {
                     let headers = this.assembleHeaders(options);
@@ -127,8 +124,8 @@ export default class ProxyFactory {
             }).on('error', err => {
                 reject(err);
             }).setTimeout(5000, () => {
+                reject(new Error('client timeout'));
                 request.abort();
-                reject(new Error('timeout'));
             });
 
             request.flushHeaders();
