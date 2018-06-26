@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "supervisor -w src,config -e ts,js,json -x ts-node -- src"
+    "start": "supervisor -w src,config -e ts,js,json -x ts-node -- src"
   },
   "repository": {
     "type": "git",
