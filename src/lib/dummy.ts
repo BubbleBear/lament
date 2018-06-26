@@ -1,6 +1,6 @@
 import { Transform } from 'stream';
 
-class Dummy extends Transform {
+export abstract class Dummy extends Transform {
     constructor(options?) {
         super(options);
 
@@ -14,9 +14,7 @@ class Dummy extends Transform {
         callback();
     }
 
-    protected handler(chunk: Buffer): Buffer {
-        return chunk;
-    }
+    protected abstract handler(chunk: Buffer): Buffer;
 
     protected reverseBit<T extends Uint8Array>(chunk: T): T {
         return <T>chunk.map((v) => {
