@@ -21,14 +21,7 @@ export default class ProxyFactory {
 
     public getLegacyProxy() {
         return async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
-            const remoteOptions = this.assembleOptions(cReq);
-            const localOptions = this.assembleOptions(cReq, true);
-
-            const connectList = [];
-            remoteOptions && connectList.push(remoteOptions);
-            localOptions && connectList.push(localOptions);
-
-            promise.shortCircuit(connectList.map(v => this.connect(v, 1))).then((socket: net.Socket) => {
+            this.abstractProxy(cReq).then((socket: net.Socket) => {
                 cReq.pipe(new this.Cipher, {end: false}).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             }).catch(err => {
@@ -40,14 +33,7 @@ export default class ProxyFactory {
 
     public getTunnelProxy() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
-            const remoteOptions = this.assembleOptions(cReq);
-            const localOptions = this.assembleOptions(cReq, true);
-
-            const connectList = [];
-            remoteOptions && connectList.push(remoteOptions);
-            localOptions && connectList.push(localOptions);
-    
-            promise.shortCircuit(connectList.map(v => this.connect(v))).then((socket: net.Socket) => {
+            this.abstractProxy(cReq).then((socket: net.Socket) => {
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
                 cSock.pipe(new this.Cipher, {end: false}).pipe(socket);
@@ -56,6 +42,17 @@ export default class ProxyFactory {
                 cSock.end();
             });
         }
+    }
+
+    private async abstractProxy(cReq: http.IncomingMessage, ...args) {
+        const remoteOptions = this.assembleOptions(cReq);
+        const localOptions = this.assembleOptions(cReq, true);
+
+        const connectList = [];
+        remoteOptions && connectList.push(remoteOptions);
+        localOptions && connectList.push(localOptions);
+
+        return promise.shortCircuit(connectList.map(v => this.connect(v, cReq.method != 'CONNECT')));
     }
 
     public getServerProxy() {
@@ -71,11 +68,11 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Decipher).pipe(sSock);
                 sSock.pipe(new this.Cipher).pipe(cSock);
             }).on('error', (e) => {
-                cSock.destroy(e);
+                sSock.connecting && cSock.destroy(e);
             }).on('end', () => {
-                cSock.end();
+                sSock.connecting && cSock.end();
             }).setTimeout(5000, () => {
-                cSock.destroy(new Error('server timeout'));
+                sSock.connecting && cSock.destroy(new Error('server timeout'));
             });
     
             cSock.on('error', (e) => {
@@ -122,7 +119,7 @@ export default class ProxyFactory {
                     string2readable(headers).pipe(new this.Cipher).pipe(sock);
                 }
             }).on('error', err => {
-                console.log(err)
+                // console.log(err)
                 reject(err);
             }).setTimeout(5000, () => {
                 request.emit('error', new Error('client timeout'));
