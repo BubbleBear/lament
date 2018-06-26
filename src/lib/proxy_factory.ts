@@ -122,6 +122,7 @@ export default class ProxyFactory {
                     string2readable(headers).pipe(new this.Cipher).pipe(sock);
                 }
             }).on('error', err => {
+                console.log(err)
                 reject(err);
             }).setTimeout(5000, () => {
                 request.emit('error', new Error('client timeout'));
