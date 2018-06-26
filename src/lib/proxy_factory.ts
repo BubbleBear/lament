@@ -52,7 +52,11 @@ export default class ProxyFactory {
         remoteOptions && connectList.push(remoteOptions);
         localOptions && connectList.push(localOptions);
 
-        return promise.shortCircuit(connectList.map(v => this.connect(v, cReq.method != 'CONNECT')));
+        return promise.shortCircuit(
+            connectList.map(
+                v => this.connect(v, cReq.method != 'CONNECT')
+            )
+        );
     }
 
     public getServerProxy() {
