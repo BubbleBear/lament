@@ -72,7 +72,7 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Decipher).pipe(sSock);
                 sSock.pipe(new this.Cipher).pipe(cSock);
             }).on('error', (e) => {
-                console.log(e)
+                console.log('sSock error: ', e)
                 cSock.connecting && cSock.destroy(e);
             }).on('end', () => {
                 cSock.connecting && cSock.end();
@@ -81,7 +81,7 @@ export default class ProxyFactory {
             });
     
             cSock.on('error', (e) => {
-                console.log(e)
+                console.log('cSock error: ', e)
                 sSock.connecting && sSock.destroy(e);
             }).on('end', () => {
                 sSock.connecting && sSock.end();
