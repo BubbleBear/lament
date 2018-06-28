@@ -72,14 +72,16 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Decipher).pipe(sSock);
                 sSock.pipe(new this.Cipher).pipe(cSock);
             }).on('error', (e) => {
-                sSock.connecting && cSock.destroy(e);
+                console.log(e)
+                cSock.connecting && cSock.destroy(e);
             }).on('end', () => {
-                sSock.connecting && cSock.end();
+                cSock.connecting && cSock.end();
             }).setTimeout(5000, () => {
-                sSock.connecting && cSock.destroy(new Error('server timeout'));
+                cSock.connecting && cSock.destroy(new Error('server timeout'));
             });
     
             cSock.on('error', (e) => {
+                console.log(e)
                 sSock.connecting && sSock.destroy(e);
             }).on('end', () => {
                 sSock.connecting && sSock.end();
