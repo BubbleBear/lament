@@ -21,6 +21,14 @@ export default class ProxyFactory {
 
     public getLegacyProxy() {
         return async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
+            cReq.on('close', () => {
+                console.log('request closed')
+                cRes.end();
+            }).on('aborted', () => {
+                console.log('aborted');
+                cRes.end();
+            });
+
             this.abstractProxy(cReq).then((socket: net.Socket) => {
                 cReq.pipe(new this.Cipher, {end: false}).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
@@ -33,6 +41,19 @@ export default class ProxyFactory {
 
     public getTunnelProxy() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
+            cReq.on('close', () => {
+                console.log('tunnel closed')
+            }).on('aborted', () => {
+                console.log('tunnel aborted');
+            })
+            cSock.on('close', () => {
+                console.log('socket closed');
+            }).on('error', err => {
+                console.log(err);
+            }).on('end', () => {
+                console.log('ended');
+            });
+            
             this.abstractProxy(cReq).then((socket: net.Socket) => {
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
