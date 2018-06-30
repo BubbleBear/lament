@@ -21,15 +21,15 @@ export default class ProxyFactory {
 
     public getLegacyProxy() {
         return async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
-            cReq.on('close', () => {
-                console.log('request closed')
-                cRes.end();
-            }).on('aborted', () => {
-                console.log('aborted');
-                cRes.end();
-            });
-
             this.abstractProxy(cReq).then((socket: net.Socket) => {
+                cReq.on('close', () => {
+                    console.log('request closed')
+                    cRes.end();
+                }).on('aborted', () => {
+                    console.log('aborted');
+                    cRes.end();
+                });
+
                 cReq.pipe(new this.Cipher, {end: false}).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             }).catch(err => {
@@ -41,20 +41,21 @@ export default class ProxyFactory {
 
     public getTunnelProxy() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
-            cReq.on('close', () => {
-                console.log('tunnel closed')
-            }).on('aborted', () => {
-                console.log('tunnel aborted');
-            })
-            cSock.on('close', () => {
-                console.log('socket closed');
-            }).on('error', err => {
-                console.log(err);
-            }).on('end', () => {
-                console.log('ended');
-            });
-            
             this.abstractProxy(cReq).then((socket: net.Socket) => {
+                cReq.on('close', () => {
+                    console.log('tunnel closed')
+                }).on('aborted', () => {
+                    console.log('tunnel aborted');
+                })
+                cSock.on('close', () => {
+                    console.log('socket closed');
+                }).on('error', err => {
+                    console.log(err);
+                }).on('end', () => {
+                    console.log('ended');
+                    socket.end();
+                });
+                
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
                 cSock.pipe(new this.Cipher, {end: false}).pipe(socket);
@@ -93,7 +94,7 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Decipher).pipe(sSock);
                 sSock.pipe(new this.Cipher).pipe(cSock);
             }).on('error', (e) => {
-                console.log('sSock error: ', e)
+                console.log('sSock error: ', e.message)
                 cSock.destroy(e);
             }).on('end', () => {
                 cSock.end();
@@ -102,7 +103,7 @@ export default class ProxyFactory {
             });
     
             cSock.on('error', (e) => {
-                console.log('cSock error: ', e)
+                console.log('cSock error: ', e.message)
                 sSock.destroy(e);
             }).on('end', () => {
                 sSock.end();
@@ -138,7 +139,7 @@ export default class ProxyFactory {
                 resolve(sock);
                 request.removeAllListeners('timeout');
                 sock.on('error', err => {
-                    console.log('connect error', err);
+                    console.log('connect socket error', err.message);
                 });
 
                 if (sendHeaders) {
@@ -146,7 +147,7 @@ export default class ProxyFactory {
                     string2readable(headers).pipe(new this.Cipher).pipe(sock);
                 }
             }).on('error', err => {
-                console.log(err)
+                console.log('connect error: ', err.message)
                 reject(err);
                 request.abort();
             }).setTimeout(5000, () => {
