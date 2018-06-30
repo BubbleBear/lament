@@ -1,9 +1,10 @@
 import * as http from 'http';
 import * as net from 'net';
 import { parse } from 'url';
-import { Transform } from 'stream';
+import { Transform, Readable, Writable } from 'stream';
 import { string2readable, promise } from './utils';
 import { DummyCipher, DummyDecipher } from './dummy';
+import { Socket } from 'dgram';
 
 export default class ProxyFactory {
     private config;
@@ -22,13 +23,7 @@ export default class ProxyFactory {
     public getLegacyProxy() {
         return async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
             this.abstractProxy(cReq).then((socket: net.Socket) => {
-                cReq.on('close', () => {
-                    console.log('request closed')
-                    cRes.end();
-                }).on('aborted', () => {
-                    console.log('request aborted');
-                    cRes.end();
-                });
+                this.connectionBridge(cReq.connection, socket, 'request socket');
 
                 cReq.pipe(new this.Cipher, {end: false}).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
@@ -42,19 +37,9 @@ export default class ProxyFactory {
     public getTunnelProxy() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             this.abstractProxy(cReq).then((socket: net.Socket) => {
-                cReq.on('close', () => {
-                    console.log('tunnel closed')
-                }).on('aborted', () => {
-                    console.log('tunnel aborted');
-                })
-                cSock.on('close', () => {
-                    console.log('tunnel socket closed');
-                }).on('error', err => {
-                    console.log('tunnel socket error: ', err.message);
-                }).on('end', () => {
-                    console.log('tunnel socket ended');
-                    socket.end();
-                });
+                this.connectionBridge(cReq.connection, socket, 'tunnel request socket');
+
+                this.connectionBridge(cSock, socket, 'tunnel socket');
                 
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
@@ -93,22 +78,25 @@ export default class ProxyFactory {
                 sSock.write(head);
                 cSock.pipe(new this.Decipher).pipe(sSock);
                 sSock.pipe(new this.Cipher).pipe(cSock);
-            }).on('error', (e) => {
-                console.log('sSock error: ', e.message)
-                cSock.destroy(e);
-            }).on('end', () => {
-                cSock.end();
             }).setTimeout(5000, () => {
                 cSock.destroy(new Error('server timeout'));
             });
+
+            this.connectionBridge(sSock, cSock, 'sSock');
     
-            cSock.on('error', (e) => {
-                console.log('cSock error: ', e.message)
-                sSock.destroy(e);
-            }).on('end', () => {
-                sSock.end();
-            })
+            this.connectionBridge(cSock, sSock, 'cSock');
         }
+    }
+
+    private connectionBridge(connection1: net.Socket, connection2: net.Socket, tag?: string) {
+        return connection1
+        .once('error', e => {
+            console.log(`${tag} error: `, e.message);
+        })
+        .once('closed', () => {
+            console.log(`${tag} closed`);
+            connection2.end();
+        })
     }
 
     private assembleOptions(cReq: http.IncomingMessage, local?: Boolean) {
