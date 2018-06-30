@@ -26,7 +26,7 @@ export default class ProxyFactory {
                     console.log('request closed')
                     cRes.end();
                 }).on('aborted', () => {
-                    console.log('aborted');
+                    console.log('request aborted');
                     cRes.end();
                 });
 
@@ -48,11 +48,11 @@ export default class ProxyFactory {
                     console.log('tunnel aborted');
                 })
                 cSock.on('close', () => {
-                    console.log('socket closed');
+                    console.log('tunnel socket closed');
                 }).on('error', err => {
-                    console.log(err);
+                    console.log('tunnel socket error: ', err.message);
                 }).on('end', () => {
-                    console.log('ended');
+                    console.log('tunnel socket ended');
                     socket.end();
                 });
                 
