@@ -90,10 +90,11 @@ export default class ProxyFactory {
 
     private connectionBridge(connection1: net.Socket, connection2: net.Socket, tag?: string) {
         return connection1
-        .once('error', e => {
+        .on('error', e => {
             console.log(`${tag} error: `, e.message);
+            connection1.destroy();
         })
-        .once('closed', () => {
+        .on('closed', () => {
             console.log(`${tag} closed`);
             connection2.end();
         })
