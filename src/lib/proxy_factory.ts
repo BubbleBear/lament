@@ -129,7 +129,7 @@ export default class ProxyFactory {
                 request.removeAllListeners('timeout');
                 sock.on('error', err => {
                     console.log('connect socket error', err.message);
-                    sock.destroy();
+                    request.abort();
                 });
 
                 if (sendHeaders) {
