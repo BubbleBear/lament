@@ -129,6 +129,7 @@ export default class ProxyFactory {
                 request.removeAllListeners('timeout');
                 sock.on('error', err => {
                     console.log('connect socket error', err.message);
+                    sock.destroy();
                 });
 
                 if (sendHeaders) {
@@ -152,7 +153,6 @@ export default class ProxyFactory {
         const method = opts.inner && opts.inner.method && opts.inner.method.toUpperCase() || 'GET';
         const httpVersion = opts.inner && opts.inner.httpVersion || 1.1;
     
-        // connection has to be close for now, which is to be optimized
         let headers = `${method} ${uri.path} HTTP/${httpVersion}\r\n` + 
                     `connection: close\r\n`;
         opts.inner && opts.inner.headers.host || (headers += `host: ${uri.host}\r\n`);
