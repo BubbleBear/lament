@@ -25,9 +25,10 @@ export default class ProxyFactory {
             this.abstractProxy(cReq).then((socket: net.Socket) => {
                 this.connectionBridge(cReq.connection, socket, 'request socket');
 
-                cReq.pipe(new this.Cipher, {end: false}).pipe(socket);
+                cReq.pipe(new this.Cipher, { end: false }).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             }).catch(err => {
+                console.log('promise rejected')
                 cRes.writeHead(400, err.message || 'unknown error with lament');
                 cRes.end();
             });
@@ -40,12 +41,13 @@ export default class ProxyFactory {
                 this.connectionBridge(cReq.connection, socket, 'tunnel request socket');
 
                 this.connectionBridge(cSock, socket, 'tunnel socket');
-                
+
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
                 cSock.pipe(new this.Cipher).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cSock);
             }).catch(err => {
+                console.log('promise rejected')
                 cSock.end();
             });
         }
@@ -70,8 +72,8 @@ export default class ProxyFactory {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             const encodedPath = cReq.url;
             const path = (new this.Decipher).decode(encodedPath);
-            const options = parse(path.indexOf('http') ? 'http://' + path: path);
-    
+            const options = parse(path.indexOf('http') ? 'http://' + path : path);
+
             const sSock = net.connect(Number(options.port) || 80, options.hostname, () => {
                 sSock.removeAllListeners('timeout');
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
@@ -79,25 +81,25 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Decipher).pipe(sSock);
                 sSock.pipe(new this.Cipher).pipe(cSock);
             }).setTimeout(5000, () => {
-                cSock.destroy(new Error('server timeout'));
+                cSock.emit('error', new Error('server timeout'));
             });
 
             this.connectionBridge(sSock, cSock, 'sSock');
-    
+
             this.connectionBridge(cSock, sSock, 'cSock');
         }
     }
 
-    private connectionBridge(connection1: net.Socket, connection2: net.Socket, tag?: string) {
-        return connection1
-        .on('error', e => {
-            console.log(`${tag} error: `, e.message);
-            connection1.destroy();
-        })
-        .on('closed', () => {
-            console.log(`${tag} closed`);
-            connection2.end();
-        })
+    private connectionBridge(src: net.Socket, dest: net.Socket, tag?: string): net.Socket {
+        return src
+            .on('error', e => {
+                console.log(`${tag} error: `, e.message);
+                src.destroy();
+            })
+            .on('close', () => {
+                console.log(`${tag} closed`);
+                dest.end();
+            })
     }
 
     private assembleOptions(cReq: http.IncomingMessage, local?: Boolean) {
@@ -118,31 +120,30 @@ export default class ProxyFactory {
                     headers: cReq.headers
                 }
             };
-        } catch (e) {}
+        } catch (e) { }
     }
 
     private connect(options, sendHeaders?) {
         return new Promise((resolve, reject) => {
             const request = http.request(options)
-            .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
-                resolve(sock);
-                request.removeAllListeners('timeout');
-                sock.on('error', err => {
-                    console.log('connect socket error', err.message);
-                    request.abort();
-                });
+                .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
+                    resolve(sock);
+                    request.removeAllListeners('timeout');
+                    sock.on('error', err => {
+                        console.log('connect socket error', err.message);
+                    });
 
-                if (sendHeaders) {
-                    let headers = this.assembleHeaders(options);
-                    string2readable(headers).pipe(new this.Cipher).pipe(sock);
-                }
-            }).on('error', err => {
-                console.log('connect error: ', err.message)
-                reject(err);
-                request.abort();
-            }).setTimeout(5000, () => {
-                request.emit('error', new Error('client timeout'));
-            });
+                    if (sendHeaders) {
+                        let headers = this.assembleHeaders(options);
+                        string2readable(headers).pipe(new this.Cipher).pipe(sock);
+                    }
+                }).on('error', err => {
+                    console.log('connect error: ', err.message)
+                    reject(err);
+                    request.abort();
+                }).setTimeout(5000, () => {
+                    request.emit('error', new Error('client timeout'));
+                });
 
             request.flushHeaders();
         });
@@ -152,11 +153,11 @@ export default class ProxyFactory {
         const uri = parse('http://' + (opts.inner && opts.inner.path || opts.path));
         const method = opts.inner && opts.inner.method && opts.inner.method.toUpperCase() || 'GET';
         const httpVersion = opts.inner && opts.inner.httpVersion || 1.1;
-    
-        let headers = `${method} ${uri.path} HTTP/${httpVersion}\r\n` + 
-                    `connection: close\r\n`;
+
+        let headers = `${method} ${uri.path} HTTP/${httpVersion}\r\n` +
+            `connection: close\r\n`;
         opts.inner && opts.inner.headers.host || (headers += `host: ${uri.host}\r\n`);
-    
+
         if (opts.inner && opts.inner.headers) {
             for (const k in opts.inner.headers) {
                 if (k.includes('connection')) continue;
