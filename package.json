@@ -6,9 +6,12 @@
   "directories": {
     "test": "test"
   },
+  "bin": {
+    "lament": "index.ts"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "supervisor -w src,config -e ts,js,json -x ts-node -- src"
+    "dev": "supervisor -w src,config -e ts,js,json -x ts-node -- src"
   },
   "repository": {
     "type": "git",
