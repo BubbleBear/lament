@@ -44,7 +44,7 @@ export default class ProxyFactory {
 
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
-                cSock.pipe(new this.Cipher).pipe(socket);
+                cSock.pipe(new this.Cipher, { end: false }).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cSock);
             }).catch(err => {
                 console.log('promise rejected')
