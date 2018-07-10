@@ -93,11 +93,9 @@ export default class ProxyFactory {
     private connectionBridge(src: net.Socket, dest: net.Socket, tag?: string): net.Socket {
         return src
             .on('error', e => {
-                console.log(`${tag} error: `, e.message);
                 src.destroy();
             })
             .on('close', () => {
-                console.log(`${tag} closed`);
                 dest.end();
             })
     }
@@ -128,20 +126,24 @@ export default class ProxyFactory {
             const request = http.request(options)
                 .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
                     resolve(sock);
-                    request.removeAllListeners('timeout');
-                    sock.on('error', err => {
-                        console.log('connect socket error', err.message);
-                    });
+                    sock
+                        .on('error', err => {
+                            console.log('connect socket error', err.message);
+                        })
+                        .on('pipe', (src) => {
+                            request.removeAllListeners('timeout');
+                        })
 
                     if (sendHeaders) {
                         let headers = this.assembleHeaders(options);
                         string2readable(headers).pipe(new this.Cipher).pipe(sock);
                     }
-                }).on('error', err => {
-                    console.log('connect error: ', err.message)
+                })
+                .on('error', err => {
                     reject(err);
                     request.abort();
-                }).setTimeout(5000, () => {
+                })
+                .setTimeout(5000, () => {
                     request.emit('error', new Error('client timeout'));
                 });
 
