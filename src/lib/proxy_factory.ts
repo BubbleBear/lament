@@ -4,7 +4,6 @@ import { parse } from 'url';
 import { Transform, Readable, Writable } from 'stream';
 import { string2readable, promise } from './utils';
 import { DummyCipher, DummyDecipher } from './dummy';
-import { Socket } from 'dgram';
 
 export default class ProxyFactory {
     private config;
@@ -38,8 +37,6 @@ export default class ProxyFactory {
     public getTunnelProxy() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             this.abstractProxy(cReq).then((socket: net.Socket) => {
-                this.connectionBridge(cReq.connection, socket, 'tunnel request socket');
-
                 this.connectionBridge(cSock, socket, 'tunnel socket');
 
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
@@ -93,9 +90,15 @@ export default class ProxyFactory {
     private connectionBridge(src: net.Socket, dest: net.Socket, tag?: string): net.Socket {
         return src
             .on('error', e => {
+                // console.log(tag, e.message)
                 src.destroy();
             })
+            .on('end', () => {
+                // console.log(tag, 'ended')
+                src.end();
+            })
             .on('close', () => {
+                // console.log(tag, 'closed')
                 dest.end();
             })
     }

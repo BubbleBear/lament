@@ -8,15 +8,15 @@ const proxyFacotry = new ProxyFacotry(config);
 
 export const server = http.createServer()
     .on('connect', proxyFacotry.getServerProxy())
-    .on('error', err => {
-        console.log(err);
+    .on('clientError', err => {
+        console.log('client error: ', err.message);
     })
     .listen(config.server.listen);
 
 export const client = http.createServer()
     .on('request', proxyFacotry.getLegacyProxy())
     .on('connect', proxyFacotry.getTunnelProxy())
-    .on('error', err => {
-        console.log(err);
+    .on('clientError', err => {
+        console.log('client error: ', err.message);
     })
     .listen(config.client.listen);
