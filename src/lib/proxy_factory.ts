@@ -160,7 +160,7 @@ export default class ProxyFactory {
         const httpVersion = opts.inner && opts.inner.httpVersion || 1.1;
 
         let headers = `${method} ${uri.path} HTTP/${httpVersion}\r\n` +
-            `connection: keep-alive\r\n`;
+            `connection: close\r\n`;
         opts.inner && opts.inner.headers.host || (headers += `host: ${uri.host}\r\n`);
 
         if (opts.inner && opts.inner.headers) {
