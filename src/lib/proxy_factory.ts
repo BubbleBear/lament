@@ -130,6 +130,7 @@ export default class ProxyFactory {
                 .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
                     resolve(sock);
                     sock
+                        .setKeepAlive(true)
                         .on('error', err => {
                             console.log('connect socket error', err.message);
                         })

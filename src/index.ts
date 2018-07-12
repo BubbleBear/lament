@@ -10,7 +10,7 @@ export const server = http.createServer()
     .on('connect', proxyFacotry.getServerProxy())
     .on('clientError', (err, sock) => {
         console.log('client error: ', err.message);
-        sock.destroy();
+        sock.end();
     })
     .listen(config.server.listen);
 
@@ -19,6 +19,6 @@ export const client = http.createServer()
     .on('connect', proxyFacotry.getTunnelProxy())
     .on('clientError', (err, sock) => {
         console.log('client error: ', err.message);
-        sock.destroy();
+        sock.end();
     })
     .listen(config.client.listen);
