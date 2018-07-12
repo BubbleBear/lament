@@ -132,6 +132,10 @@ export default class ProxyFactory {
                     sock
                         .on('error', err => {
                             console.log('connect socket error', err.message);
+                            sock.destroy()
+                        })
+                        .on('end', () => {
+                            sock.end();
                         })
                         .on('pipe', (src) => {
                             request.removeAllListeners('timeout');
