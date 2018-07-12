@@ -27,7 +27,7 @@ export default class ProxyFactory {
                 cReq.pipe(new this.Cipher, { end: false }).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             }).catch(err => {
-                console.log('promise rejected')
+                console.log('promise rejected: ', err)
                 cRes.writeHead(400, err.message || 'unknown error with lament');
                 cRes.end();
             });
@@ -44,7 +44,7 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Cipher, { end: false }).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cSock);
             }).catch(err => {
-                console.log('promise rejected')
+                console.log('promise rejected: ', err)
                 cSock.end();
             });
         }
@@ -78,7 +78,7 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Decipher).pipe(sSock);
                 sSock.pipe(new this.Cipher).pipe(cSock);
             }).setTimeout(5000, () => {
-                cSock.emit('error', new Error('server timeout'));
+                cSock.destroy(new Error('server timeout'));
             });
 
             this.connectionBridge(sSock, cSock, 'sSock');
@@ -90,15 +90,15 @@ export default class ProxyFactory {
     private connectionBridge(src: net.Socket, dest: net.Socket, tag?: string): net.Socket {
         return src
             .on('error', e => {
-                // console.log(tag, e.message)
+                console.log(tag, e.message)
                 src.destroy();
             })
             .on('end', () => {
-                // console.log(tag, 'ended')
+                console.log(tag, 'ended')
                 src.end();
             })
             .on('close', () => {
-                // console.log(tag, 'closed')
+                console.log(tag, 'closed')
                 dest.end();
             })
     }
@@ -130,7 +130,6 @@ export default class ProxyFactory {
                 .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
                     resolve(sock);
                     sock
-                        .setKeepAlive(true)
                         .on('error', err => {
                             console.log('connect socket error', err.message);
                         })
@@ -161,7 +160,7 @@ export default class ProxyFactory {
         const httpVersion = opts.inner && opts.inner.httpVersion || 1.1;
 
         let headers = `${method} ${uri.path} HTTP/${httpVersion}\r\n` +
-            `connection: close\r\n`;
+            `connection: keep-alive\r\n`;
         opts.inner && opts.inner.headers.host || (headers += `host: ${uri.host}\r\n`);
 
         if (opts.inner && opts.inner.headers) {

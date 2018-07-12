@@ -5,7 +5,8 @@ export abstract class Dummy extends Transform {
         super(options);
 
         this.on('error', err => {
-            console.log(err)
+            console.log('cipher error: ', err)
+            this.destroy();
         })
     }
 
