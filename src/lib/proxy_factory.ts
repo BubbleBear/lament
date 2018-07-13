@@ -24,7 +24,7 @@ export default class ProxyFactory {
             this.abstractProxy(cReq).then((socket: net.Socket) => {
                 this.connectionBridge(cReq.connection, socket, 'request socket');
 
-                cReq.pipe(new this.Cipher, { end: false }).pipe(socket);
+                cReq.connection.pipe(new this.Cipher, { end: false }).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             }).catch(err => {
                 console.log('promise rejected: ', err)
@@ -108,20 +108,18 @@ export default class ProxyFactory {
         const encodedPath = (new this.Cipher).encode(path);
         const clientConfig = this.config.client;
 
-        try {
-            return {
-                hostname: local ? 'localhost' : clientConfig.remotes[clientConfig.onuse].host,
-                port: local ? this.config.server.listen || 5555 : clientConfig.remotes[clientConfig.onuse].port,
-                method: 'connect',
-                path: encodedPath,
-                inner: {
-                    httpVersion: cReq.httpVersion,
-                    method: cReq.method,
-                    path: path,
-                    headers: cReq.headers
-                }
-            };
-        } catch (e) { }
+        return {
+            hostname: local ? 'localhost' : clientConfig.remotes[clientConfig.onuse].host,
+            port: local ? this.config.server.listen || 5555 : clientConfig.remotes[clientConfig.onuse].port,
+            method: 'connect',
+            path: encodedPath,
+            inner: {
+                httpVersion: cReq.httpVersion,
+                method: cReq.method,
+                path: path,
+                headers: cReq.headers
+            }
+        };
     }
 
     private connect(options, sendHeaders?) {
