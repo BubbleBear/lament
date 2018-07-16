@@ -22,14 +22,12 @@ export default class ProxyFactory {
     public getLegacyProxy() {
         return async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
             this.abstractProxy(cReq).then((socket: net.Socket) => {
-                this.connectionBridge(cReq.connection, socket, 'request socket');
+                this.catchError(cReq.connection, 'local client request connection');
 
-                cReq.connection.pipe(new this.Cipher, { end: false }).pipe(socket);
+                cReq.pipe(new this.Cipher).pipe(socket, { end: false });
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             }).catch(err => {
-                console.log('promise rejected: ', err)
-                cRes.writeHead(400, err.message || 'unknown error with lament');
-                cRes.end();
+                console.log('promise rejected: ', err.message)
             });
         };
     }
@@ -37,15 +35,14 @@ export default class ProxyFactory {
     public getTunnelProxy() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             this.abstractProxy(cReq).then((socket: net.Socket) => {
-                this.connectionBridge(cSock, socket, 'tunnel socket');
+                this.catchError(cSock, 'local client socket');
 
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
-                cSock.pipe(new this.Cipher, { end: false }).pipe(socket);
+                cSock.pipe(new this.Cipher).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cSock);
             }).catch(err => {
-                console.log('promise rejected: ', err)
-                cSock.end();
+                console.log('promise rejected: ', err.message)
             });
         }
     }
@@ -60,7 +57,7 @@ export default class ProxyFactory {
 
         return promise.shortCircuit(
             connectList.map(
-                v => this.connect(v, cReq.method != 'CONNECT')
+                v => this.bridge(v, cReq.method != 'CONNECT')
             )
         );
     }
@@ -71,36 +68,28 @@ export default class ProxyFactory {
             const path = (new this.Decipher).decode(encodedPath);
             const options = parse(path.indexOf('http') ? 'http://' + path : path);
 
-            const sSock = net.connect(Number(options.port) || 80, options.hostname, () => {
-                sSock.removeAllListeners('timeout');
-                cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-                sSock.write(head);
-                cSock.pipe(new this.Decipher).pipe(sSock);
-                sSock.pipe(new this.Cipher).pipe(cSock);
-            }).setTimeout(5000, () => {
-                cSock.destroy(new Error('server timeout'));
-            });
+            const sSock = net
+                .connect(Number(options.port) || 80, options.hostname, () => {
+                    sSock.removeAllListeners('timeout');
+                    cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+                    sSock.write(head);
+                    cSock.pipe(new this.Decipher).pipe(sSock);
+                    sSock.pipe(new this.Cipher).pipe(cSock);
+                })
+                .setTimeout(5000, () => {
+                    cSock.destroy(new Error('server timeout'));
+                });
 
-            this.connectionBridge(sSock, cSock, 'sSock');
-
-            this.connectionBridge(cSock, sSock, 'cSock');
+            this.catchError(sSock, 'remote server socket');
+            this.catchError(cSock, 'remote client socket');
         }
     }
 
-    private connectionBridge(src: net.Socket, dest: net.Socket, tag?: string): net.Socket {
-        return src
-            .on('error', e => {
-                console.log(tag, e.message)
-                src.destroy();
-            })
-            .on('end', () => {
-                console.log(tag, 'ended')
-                src.end();
-            })
-            .on('close', () => {
-                console.log(tag, 'closed')
-                dest.end();
-            })
+    private catchError(socket: net.Socket, tag?: string) {
+        socket
+            .on('error', (e: Error) => {
+                console.log(`${tag}: ${e.message}`);
+            });
     }
 
     private assembleOptions(cReq: http.IncomingMessage, local?: Boolean) {
@@ -122,22 +111,17 @@ export default class ProxyFactory {
         };
     }
 
-    private connect(options, sendHeaders?) {
+    private bridge(options, sendHeaders?) {
         return new Promise((resolve, reject) => {
             const request = http.request(options)
                 .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
                     resolve(sock);
                     sock
-                        .on('error', err => {
-                            console.log('connect socket error', err.message);
-                            sock.destroy()
-                        })
-                        .on('end', () => {
-                            sock.end();
-                        })
                         .on('pipe', (src) => {
                             request.removeAllListeners('timeout');
                         })
+
+                    this.catchError(sock, 'local server socket');
 
                     if (sendHeaders) {
                         let headers = this.assembleHeaders(options);
