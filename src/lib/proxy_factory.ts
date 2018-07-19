@@ -134,7 +134,6 @@ export default class ProxyFactory {
                 .on('error', err => {
                     reject(err);
                     request.abort();
-                    console.log('aborted: ', err.message)
                 })
                 .setTimeout(5000, () => {
                     request.emit('error', new Error('client timeout'));
