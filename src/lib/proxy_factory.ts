@@ -23,6 +23,9 @@ export default class ProxyFactory {
         return async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
             this.abstractProxy(cReq).then((socket: net.Socket) => {
                 this.catchError(cReq.connection, 'local client request connection');
+                cRes.on('close', () => {
+                    socket.end();
+                })
 
                 cReq.pipe(new this.Cipher).pipe(socket, { end: false });
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
@@ -131,6 +134,7 @@ export default class ProxyFactory {
                 .on('error', err => {
                     reject(err);
                     request.abort();
+                    console.log('aborted: ', err.message)
                 })
                 .setTimeout(5000, () => {
                     request.emit('error', new Error('client timeout'));
