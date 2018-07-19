@@ -10,7 +10,7 @@
     "lament": "index.ts"
   },
   "scripts": {
-    "test": "node ./node_modules/ts-node/dist/bin.js src",
+    "test": "node --inspect ./node_modules/ts-node/dist/bin.js src",
     "dev": "supervisor -w src,config -e ts,js,json -x ts-node -- src"
   },
   "repository": {

@@ -57,7 +57,7 @@ export default class ProxyFactory {
 
         return promise.shortCircuit(
             connectList.map(
-                v => this.bridge(v, cReq.method != 'CONNECT')
+                v => this.bridging(v, cReq.method != 'CONNECT')
             )
         );
     }
@@ -111,7 +111,7 @@ export default class ProxyFactory {
         };
     }
 
-    private bridge(options, sendHeaders?) {
+    private bridging(options, sendHeaders?) {
         return new Promise((resolve, reject) => {
             const request = http.request(options)
                 .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
