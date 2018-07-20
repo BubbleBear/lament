@@ -128,7 +128,7 @@ export default class ProxyFactory {
 
                     if (sendHeaders) {
                         let headers = this.assembleHeaders(options);
-                        string2readable(headers).pipe(new this.Cipher).pipe(sock);
+                        string2readable(headers).pipe(new this.Cipher).pipe(sock, { end: false });
                     }
                 })
                 .on('error', err => {
