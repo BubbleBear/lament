@@ -58,7 +58,7 @@ export default class ProxyFactory {
         remoteOptions && connectList.push(remoteOptions);
         localOptions && connectList.push(localOptions);
 
-        return promise.shortCircuit(
+        return promise.or(
             connectList.map(
                 v => this.bridging(v, cReq.method != 'CONNECT')
             )
