@@ -35,7 +35,7 @@ export default class ProxyFactory {
         };
     }
 
-    public getTunnelProxy() {
+    public getConnectProxy() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             this.abstractProxy(cReq).then((socket: net.Socket) => {
                 this.catchError(cSock, 'local client socket');
@@ -60,7 +60,7 @@ export default class ProxyFactory {
 
         return promise.or(
             connectList.map(
-                v => this.bridging(v, cReq.method != 'CONNECT')
+                v => this.tunneling(v, cReq.method != 'CONNECT')
             )
         );
     }
@@ -114,7 +114,7 @@ export default class ProxyFactory {
         };
     }
 
-    private bridging(options, sendHeaders?) {
+    private tunneling(options, sendHeaders?) {
         return new Promise((resolve, reject) => {
             const request = http.request(options)
                 .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
@@ -144,13 +144,13 @@ export default class ProxyFactory {
     }
 
     private assembleHeaders(opts) {
-        const uri = parse('http://' + (opts.inner && opts.inner.path || opts.path));
+        const url = parse('http://' + (opts.inner && opts.inner.path || opts.path));
         const method = opts.inner && opts.inner.method && opts.inner.method.toUpperCase() || 'GET';
         const httpVersion = opts.inner && opts.inner.httpVersion || 1.1;
 
-        let headers = `${method} ${uri.path} HTTP/${httpVersion}\r\n` +
+        let headers = `${method} ${url.path} HTTP/${httpVersion}\r\n` +
             `connection: close\r\n`;
-        opts.inner && opts.inner.headers.host || (headers += `host: ${uri.host}\r\n`);
+        opts.inner && opts.inner.headers.host || (headers += `host: ${url.host}\r\n`);
 
         if (opts.inner && opts.inner.headers) {
             for (const k in opts.inner.headers) {

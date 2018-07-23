@@ -16,7 +16,7 @@ export const server = http.createServer()
 
 export const client = http.createServer()
     .on('request', proxyFacotry.getLegacyProxy())
-    .on('connect', proxyFacotry.getTunnelProxy())
+    .on('connect', proxyFacotry.getConnectProxy())
     .on('clientError', (err, sock) => {
         console.log('client error: ', err.message);
         sock.destroy();
