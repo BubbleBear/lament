@@ -87,7 +87,8 @@ export default class ProxyFactory {
             const path = (new this.Decipher).decode(encodedPath);
             const options = parse(path.indexOf('http') ? 'http://' + path : path);
 
-            cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+            cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n', () => {
+            });
 
             const sSock = net
                 .connect(Number(options.port) || 80, options.hostname, () => {
@@ -144,7 +145,16 @@ export default class ProxyFactory {
                 .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
                     resolve(sock);
                     sock
-                        .on('pipe', (src) => {
+                        .once('pipe', (src: net.Socket) => {
+                            if (sendHeaders) {
+                                src.pause();
+                                let headers = this.assembleHeaders(options);
+                                string2readable(headers)
+                                    .on('end', () => {
+                                        src.resume();
+                                    })
+                                    .pipe(new this.Cipher).pipe(sock, { end: false });
+                            }
                             request.removeAllListeners('timeout');
                         })
 
@@ -153,10 +163,7 @@ export default class ProxyFactory {
                         'local server socket',
                     );
 
-                    if (sendHeaders) {
-                        let headers = this.assembleHeaders(options);
-                        string2readable(headers).pipe(new this.Cipher).pipe(sock, { end: false });
-                    }
+                    
                 })
                 .on('error', err => {
                     reject(err);
