@@ -23,7 +23,12 @@ export default class ProxyFactory {
         return async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
             try {
                 const socket: net.Socket = <any>await this.abstractProxy(cReq);
-                this.catchError(cReq.connection, 'local client request connection');
+
+                this.catchError(
+                    cReq.connection,
+                    'local client request connection',
+                );
+
                 cRes.on('close', () => {
                     socket.end();
                 })
@@ -42,7 +47,11 @@ export default class ProxyFactory {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             try {
                 const socket: net.Socket = <any>await this.abstractProxy(cReq);
-                this.catchError(cSock, 'local client socket');
+
+                this.catchError(
+                    cSock,
+                    'local client socket',
+                );
 
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
@@ -61,8 +70,9 @@ export default class ProxyFactory {
         const localOptions = this.assembleOptions(cReq, true);
 
         const connectList = [];
-        remoteOptions && connectList.push(remoteOptions);
-        localOptions && connectList.push(localOptions);
+        // remoteOptions && connectList.push(remoteOptions);
+        // localOptions && connectList.push(localOptions);
+        connectList.push(localOptions, localOptions, localOptions);
 
         return promise.or(
             connectList.map(
@@ -89,15 +99,22 @@ export default class ProxyFactory {
                     cSock.destroy(new Error('server timeout'));
                 });
 
-            this.catchError(sSock, 'remote server socket');
-            this.catchError(cSock, 'remote client socket');
+            this.catchError(
+                sSock,
+                'remote server socket',
+            );
+
+            this.catchError(
+                cSock,
+                'remote client socket',
+            );
         }
     }
 
     private catchError(socket: net.Socket, tag?: string) {
         socket
             .on('error', (e: Error) => {
-                console.log(`${tag}: ${e.message}`);
+                tag && console.log(`${tag}: ${e.message}`);
             });
     }
 
@@ -130,7 +147,10 @@ export default class ProxyFactory {
                             request.removeAllListeners('timeout');
                         })
 
-                    this.catchError(sock, 'local server socket');
+                    this.catchError(
+                        sock,
+                        'local server socket',
+                    );
 
                     if (sendHeaders) {
                         let headers = this.assembleHeaders(options);
