@@ -87,16 +87,17 @@ export default class ProxyFactory {
             const path = (new this.Decipher).decode(encodedPath);
             const options = parse(path.indexOf('http') ? 'http://' + path : path);
 
+            cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+
             const sSock = net
                 .connect(Number(options.port) || 80, options.hostname, () => {
                     sSock.removeAllListeners('timeout');
-                    cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                     sSock.write(head);
                     cSock.pipe(new this.Decipher).pipe(sSock);
                     sSock.pipe(new this.Cipher).pipe(cSock);
                 })
                 .setTimeout(5000, () => {
-                    cSock.destroy(new Error('server timeout'));
+                    cSock.destroy(new Error(`server timeout, host: ${path}`));
                 });
 
             this.catchError(
