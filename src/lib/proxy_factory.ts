@@ -21,8 +21,8 @@ export default class ProxyFactory {
 
     public getLegacyProxy() {
         return async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
-            this.abstractProxy(cReq)
-            .then((socket: net.Socket) => {
+            try {
+                const socket: net.Socket = <any>await this.abstractProxy(cReq);
                 this.catchError(cReq.connection, 'local client request connection');
                 cRes.on('close', () => {
                     socket.end();
@@ -30,31 +30,29 @@ export default class ProxyFactory {
 
                 cReq.pipe(new this.Cipher).pipe(socket, { end: false });
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
-            })
-            .catch(errors => {
+            } catch (errors) {
                 console.log('promise rejected: ', errors.map((error: Error) => {
                     return error.message;
                 }));
-            });
-        };
+            }
+        }
     }
 
     public getConnectProxy() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
-            this.abstractProxy(cReq)
-            .then((socket: net.Socket) => {
+            try {
+                const socket: net.Socket = <any>await this.abstractProxy(cReq);
                 this.catchError(cSock, 'local client socket');
 
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
                 cSock.pipe(new this.Cipher).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cSock);
-            })
-            .catch(errors => {
+            } catch (errors) {
                 console.log('promise rejected: ', errors.map((error: Error) => {
                     return error.message;
                 }));
-            });
+            }
         }
     }
 
