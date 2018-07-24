@@ -144,17 +144,14 @@ export default class ProxyFactory {
             const request = http.request(options)
                 .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
                     resolve(sock);
+
+                    if (sendHeaders) {
+                        let headers = this.assembleHeaders(options);
+                        string2readable(headers).pipe(new this.Cipher).pipe(sock, { end: false });
+                    }
+                    
                     sock
-                        .once('pipe', (src: net.Socket) => {
-                            if (sendHeaders) {
-                                src.pause();
-                                let headers = this.assembleHeaders(options);
-                                string2readable(headers)
-                                    .on('end', () => {
-                                        src.resume();
-                                    })
-                                    .pipe(new this.Cipher).pipe(sock, { end: false });
-                            }
+                        .on('pipe', (src) => {
                             request.removeAllListeners('timeout');
                         })
 
@@ -162,8 +159,6 @@ export default class ProxyFactory {
                         sock,
                         'local server socket',
                     );
-
-                    
                 })
                 .on('error', err => {
                     reject(err);
