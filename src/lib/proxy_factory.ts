@@ -70,9 +70,9 @@ export default class ProxyFactory {
         const localOptions = this.assembleOptions(cReq, true);
 
         const connectList = [];
-        // remoteOptions && connectList.push(remoteOptions);
-        // localOptions && connectList.push(localOptions);
-        connectList.push(localOptions, localOptions, localOptions);
+        remoteOptions && connectList.push(remoteOptions);
+        localOptions && connectList.push(localOptions);
+        // connectList.push(localOptions, localOptions, localOptions);
 
         return promise.or(
             connectList.map(
