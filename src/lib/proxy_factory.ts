@@ -2,7 +2,7 @@ import * as http from 'http';
 import * as net from 'net';
 import { parse } from 'url';
 import { Transform, Readable, Writable } from 'stream';
-import { string2readable, promise } from './utils';
+import { promise } from './utils';
 import { DummyCipher, DummyDecipher } from './dummy';
 
 export default class ProxyFactory {
@@ -145,14 +145,13 @@ export default class ProxyFactory {
                 .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
                     resolve(sock);
 
-                    if (sendHeaders) {
-                        let headers = this.assembleHeaders(options);
-                        string2readable(headers).pipe(new this.Cipher).pipe(sock, { end: false });
-                    }
-                    
                     sock
                         .on('pipe', (src) => {
                             request.removeAllListeners('timeout');
+                            if (sendHeaders) {
+                                let headers = this.assembleHeaders(options);
+                                sock.write((new this.Cipher).encode(headers));
+                            }
                         })
 
                     this.catchError(
