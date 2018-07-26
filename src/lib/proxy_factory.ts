@@ -36,9 +36,9 @@ export default class ProxyFactory {
                 cReq.pipe(new this.Cipher).pipe(socket, { end: false });
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             } catch (errors) {
-                console.log('promise rejected: ', errors.map((error: Error) => {
+                console.log('promise rejected: ', Array.isArray(errors) && errors.map((error: Error) => {
                     return error.message;
-                }));
+                }) || errors);
             }
         }
     }
@@ -58,9 +58,9 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Cipher).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cSock);
             } catch (errors) {
-                console.log('promise rejected: ', errors.map((error: Error) => {
+                console.log('promise rejected: ', Array.isArray(errors) && errors.map((error: Error) => {
                     return error.message;
-                }));
+                }) || errors);
             }
         }
     }
