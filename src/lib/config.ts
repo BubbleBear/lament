@@ -4,12 +4,14 @@ export default class Config {
     }
 
     private merge(obj1, obj2): any {
-        const merged = Object.assign(obj1, obj2);
+        const merged = Object.assign({}, obj1, obj2);
         Object.keys(merged).forEach((k) => {
             typeof obj1[k] === 'object' && typeof obj2[k] === 'object'
-            && (Array.isArray(obj1[k]) && Array.isArray(obj2[k])
-            && (merged[k] = (<Array<any>>obj1[k]).concat(obj2[k]))
-            || (merged[k] = this.merge(obj1[k], obj2[k])));
+            && (
+                Array.isArray(obj1[k]) && Array.isArray(obj2[k])
+                && (merged[k] = (<Array<any>>obj1[k]).concat(obj2[k]))
+                || (merged[k] = this.merge(obj1[k], obj2[k]))
+            );
         })
         return merged;
     }
