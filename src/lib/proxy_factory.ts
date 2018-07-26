@@ -40,6 +40,7 @@ export default class ProxyFactory {
                 console.log('promise rejected: ', Array.isArray(errors) && errors.map((error: Error) => {
                     return error.message;
                 }) || errors);
+                cRes.writeHead(504);
             }
         }
     }
@@ -62,6 +63,7 @@ export default class ProxyFactory {
                 console.log('promise rejected: ', Array.isArray(errors) && errors.map((error: Error) => {
                     return error.message;
                 }) || errors);
+                cSock.end(504)
             }
         }
     }
@@ -95,7 +97,8 @@ export default class ProxyFactory {
                     sSock.pipe(new this.Cipher).pipe(cSock);
                 })
                 .setTimeout(5000, () => {
-                    cSock.destroy(new Error(`server timeout, host: ${path}`));
+                    cSock.end();
+                    sSock.destroy(new Error(`server timeout, host: ${path}`));
                 });
 
             this.catchError(
