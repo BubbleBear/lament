@@ -4,6 +4,7 @@ import { parse } from 'url';
 import { Transform, Readable, Writable } from 'stream';
 import { promise } from './utils';
 import { DummyCipher, DummyDecipher } from './dummy';
+import Config from './config';
 
 export default class ProxyFactory {
     private config;
@@ -12,7 +13,7 @@ export default class ProxyFactory {
 
     private Decipher: typeof DummyDecipher;
 
-    constructor(config, options?) {
+    constructor(config: Config, options?) {
         options || (options = {});
         this.config = config;
         this.Cipher = options.Cipher || DummyCipher;
@@ -66,12 +67,10 @@ export default class ProxyFactory {
     }
 
     private async abstractProxy(cReq: http.IncomingMessage, ...args) {
-        const remoteOptions = this.assembleOptions(cReq);
-        const localOptions = this.assembleOptions(cReq, true);
+        const connectList = this.config.client.remotes.map((v) => {
+            return this.assembleOptions(cReq, v);
+        });
 
-        const connectList = [];
-        remoteOptions && connectList.push(remoteOptions);
-        localOptions && connectList.push(localOptions);
         // connectList.push(localOptions, localOptions, localOptions);
 
         return promise.or(
@@ -118,14 +117,13 @@ export default class ProxyFactory {
             });
     }
 
-    private assembleOptions(cReq: http.IncomingMessage, local?: Boolean) {
+    private assembleOptions(cReq: http.IncomingMessage, config) {
         const path = cReq.url.replace(/^http:\/\//, '');
         const encodedPath = (new this.Cipher).encode(path);
-        const clientConfig = this.config.client;
 
         return {
-            hostname: local ? 'localhost' : clientConfig.remotes[clientConfig.onuse].host,
-            port: local ? this.config.server.listen || 5555 : clientConfig.remotes[clientConfig.onuse].port,
+            hostname: config ? config.host: 'localhost',
+            port: config ? config.port: this.config.server.listen || 5555,
             method: 'connect',
             path: encodedPath,
             inner: {

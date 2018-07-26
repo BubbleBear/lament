@@ -1,14 +1,29 @@
 export default class Config {
     constructor() {
-        return <any>Object.assign({}, this.default(), this.importConfig());
+        return this.merge(this.default(), this.importConfig());
+    }
+
+    private merge(obj1, obj2): any {
+        const merged = Object.assign(obj1, obj2);
+        Object.keys(merged).forEach((k) => {
+            typeof obj1[k] === 'object' && typeof obj2[k] === 'object'
+            && (Array.isArray(obj1[k]) && Array.isArray(obj2[k])
+            && (merged[k] = (<Array<any>>obj1[k]).concat(obj2[k]))
+            || (merged[k] = this.merge(obj1[k], obj2[k])));
+        })
+        return merged;
     }
 
     private default() {
         return {
             client: {
                 listen: 6666,
-                remotes: [],
-                onuse: null,
+                remotes: [
+                    {
+                        'host': 'localhost',
+                        'port': 5555,
+                    },
+                ],
             },
             server: {
                 listen: 5555,

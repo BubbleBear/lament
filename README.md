@@ -13,8 +13,7 @@ in config/client.json there should be infomations like below:
         "remotes": [{
             "host": some host,
             "port": some port
-        }],
-        "onuse": the index of server on use ,for example 0
+        }]
     }
 
 and in config/server.json:
