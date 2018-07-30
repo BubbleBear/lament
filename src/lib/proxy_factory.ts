@@ -69,7 +69,16 @@ export default class ProxyFactory {
     }
 
     private async abstractProxy(cReq: http.IncomingMessage, ...args) {
-        const connectList = this.config.client.remotes.map((v) => {
+        const client = this.config.client;
+
+        for (const k of Object.keys(this.config.client.enforce)) {
+            if (cReq.url.indexOf(k) != -1) {
+                const connect = this.assembleOptions(cReq, client.remotes[client.enforce[k]]);
+                return this.tunneling(connect, cReq.method != 'CONNECT');
+            }
+        }
+
+        const connectList = client.remotes.map((v) => {
             return this.assembleOptions(cReq, v);
         });
 

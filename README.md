@@ -13,7 +13,10 @@ in config/client.json there should be infomations like below:
         "remotes": [{
             "host": some host,
             "port": some port
-        }]
+        }],
+        "enforce": {
+            "url": for specific url as "url" the proxy will force to use specific remote server as the index of remotes, which start from 1. while 0 means do not go through proxy
+        }
     }
 
 and in config/server.json:

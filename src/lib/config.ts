@@ -26,6 +26,7 @@ export default class Config {
                         'port': 5555,
                     },
                 ],
+                enforce: {}
             },
             server: {
                 listen: 5555,

@@ -4,6 +4,8 @@ import Config from './lib/config';
 
 const config: any = new Config;
 
+// console.dir(config, { depth: null });
+
 const proxyFacotry = new ProxyFacotry(config);
 
 export const server = http.createServer()
