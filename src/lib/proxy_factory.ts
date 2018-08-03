@@ -5,6 +5,7 @@ import { Transform, Readable, Writable } from 'stream';
 import { promise } from './utils';
 import { DummyCipher, DummyDecipher } from './dummy';
 import Config from './config';
+import * as tls from 'tls';
 
 export default class ProxyFactory {
     private config;
@@ -99,8 +100,8 @@ export default class ProxyFactory {
             const path = (new this.Decipher).decode(encodedPath);
             const options = parse(path.indexOf('http') ? 'http://' + path : path);
 
-            const sSock = net
-                .connect(Number(options.port) || 80, options.hostname, () => {
+            const sSock = tls
+                .connect(Number(options.port) || 80, options.hostname, {}, () => {
                     sSock.removeAllListeners('timeout');
                     cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                     sSock.write(head);
