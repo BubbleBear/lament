@@ -37,10 +37,12 @@ export default class ProxyFactory {
                 cReq.pipe(new this.Cipher).pipe(socket, { end: false });
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             } catch (errors) {
-                console.log('promise rejected: ', Array.isArray(errors) && errors.map((error: Error) => {
+                errors = (Array.isArray(errors) && errors.map((error: Error) => {
                     return error.message;
-                }) || errors);
-                cRes.writeHead(504);
+                }) || errors).join(', ');
+
+                console.log('promise rejected: ', errors);
+                cRes.writeHead(504, errors);
             }
         }
     }
@@ -60,10 +62,12 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Cipher).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cSock);
             } catch (errors) {
-                console.log('promise rejected: ', Array.isArray(errors) && errors.map((error: Error) => {
+                errors = (Array.isArray(errors) && errors.map((error: Error) => {
                     return error.message;
-                }) || errors);
-                cSock.end(504)
+                }) || errors).join(', ');
+
+                console.log('promise rejected: ', errors);
+                cSock.end(`HTTP/1.1 504 ${errors}\r\n\r\n`);
             }
         }
     }
@@ -81,8 +85,6 @@ export default class ProxyFactory {
         const connectList = client.remotes.map((v) => {
             return this.assembleOptions(cReq, v);
         });
-
-        // connectList.push(localOptions, localOptions, localOptions);
 
         return promise.or(
             connectList.map(
