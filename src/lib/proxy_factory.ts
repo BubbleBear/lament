@@ -2,7 +2,7 @@ import * as http from 'http';
 import * as net from 'net';
 import { parse } from 'url';
 import { Transform, Readable, Writable } from 'stream';
-import { promise } from './utils';
+import { promise, catchError } from './utils';
 import { DummyCipher, DummyDecipher } from './dummy';
 import Config from './config';
 import * as tls from 'tls';
@@ -26,7 +26,7 @@ export default class ProxyFactory {
             try {
                 const socket: net.Socket = <any>await this.abstractProxy(cReq);
 
-                this.catchError(
+                catchError(
                     cReq.connection,
                     'local client request connection',
                 );
@@ -44,6 +44,7 @@ export default class ProxyFactory {
 
                 console.log('promise rejected: ', errors);
                 cRes.writeHead(504, errors);
+                cRes.end();
             }
         }
     }
@@ -53,7 +54,7 @@ export default class ProxyFactory {
             try {
                 const socket: net.Socket = <any>await this.abstractProxy(cReq);
 
-                this.catchError(
+                catchError(
                     cSock,
                     'local client socket',
                 );
@@ -100,8 +101,8 @@ export default class ProxyFactory {
             const path = (new this.Decipher).decode(encodedPath);
             const options = parse(path.indexOf('http') ? 'http://' + path : path);
 
-            const sSock = tls
-                .connect(Number(options.port) || 80, options.hostname, {}, () => {
+            const sSock = (new net.Socket)
+                .on('connect', () => {
                     sSock.removeAllListeners('timeout');
                     cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                     sSock.write(head);
@@ -113,23 +114,24 @@ export default class ProxyFactory {
                     sSock.destroy(new Error(`server timeout, host: ${path}`));
                 });
 
-            this.catchError(
+            catchError(
                 sSock,
                 'remote server socket',
             );
 
-            this.catchError(
+            catchError(
                 cSock,
                 'remote client socket',
             );
-        }
-    }
 
-    private catchError(socket: net.Socket, tag?: string) {
-        socket
-            .on('error', (e: Error) => {
-                tag && console.log(`${tag}: ${e.message}`);
-            });
+            // const ssl = tls.connect({
+            //     socket: sSock,
+            //     secureProtocol: 'SSLv23_client_method',
+            // })
+            // .on('error', () => {})
+
+            sSock.connect(Number(options.port) || 80, options.hostname,)
+        }
     }
 
     private assembleOptions(cReq: http.IncomingMessage, config) {
@@ -137,8 +139,8 @@ export default class ProxyFactory {
         const encodedPath = (new this.Cipher).encode(path);
 
         return {
-            hostname: config ? config.host: 'localhost',
-            port: config ? config.port: this.config.server.listen || 5555,
+            hostname: config ? config.host : 'localhost',
+            port: config ? config.port : this.config.server.listen || 5555,
             method: 'connect',
             path: encodedPath,
             inner: {
@@ -165,7 +167,7 @@ export default class ProxyFactory {
                             }
                         })
 
-                    this.catchError(
+                    catchError(
                         sock,
                         'local server socket',
                     );

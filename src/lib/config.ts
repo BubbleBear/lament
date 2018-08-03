@@ -1,9 +1,9 @@
 export default class Config {
     constructor() {
-        return this.merge(this.default(), this.importConfig());
+        return <any>this.merge(this.default(), this.importConfig());
     }
 
-    private merge(obj1, obj2): any {
+    private merge(obj1, obj2) {
         const merged = Object.assign({}, obj1, obj2);
         Object.keys(merged).forEach((k) => {
             typeof obj1[k] === 'object' && typeof obj2[k] === 'object'
