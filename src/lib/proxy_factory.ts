@@ -5,7 +5,6 @@ import { Transform, Readable, Writable } from 'stream';
 import { promise, catchError } from './utils';
 import { DummyCipher, DummyDecipher } from './dummy';
 import Config from './config';
-import * as tls from 'tls';
 
 export default class ProxyFactory {
     private config;
@@ -123,12 +122,6 @@ export default class ProxyFactory {
                 cSock,
                 'remote client socket',
             );
-
-            // const ssl = tls.connect({
-            //     socket: sSock,
-            //     secureProtocol: 'SSLv23_client_method',
-            // })
-            // .on('error', () => {})
 
             sSock.connect(Number(options.port) || 80, options.hostname,)
         }

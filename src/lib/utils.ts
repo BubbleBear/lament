@@ -22,6 +22,6 @@ export const promise = {
 export function catchError(socket: net.Socket, tag?: string) {
     return socket
         .on('error', (e: Error) => {
-            tag && console.log(`${tag}: ${e.message}`);
+            // tag && console.log(`${tag}: ${e.message}`);
         });
 }
