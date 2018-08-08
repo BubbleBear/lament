@@ -37,9 +37,9 @@ export default class ProxyFactory {
                 cReq.pipe(new this.Cipher).pipe(socket, { end: false });
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
             } catch (errors) {
-                errors = Array.isArray(errors) && errors.map((error: Error) => {
+                errors = Array.isArray(errors) ? errors.map((error: Error) => {
                     return error.message;
-                }).join(', ') || errors;
+                }).join(', ') : errors;
 
                 console.log('promise rejected: ', errors);
                 cRes.writeHead(504, errors);
@@ -63,9 +63,9 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Cipher).pipe(socket);
                 socket.pipe(new this.Decipher).pipe(cSock);
             } catch (errors) {
-                errors = Array.isArray(errors) && errors.map((error: Error) => {
+                errors = Array.isArray(errors) ? errors.map((error: Error) => {
                     return error.message;
-                }).join(', ') || errors;
+                }).join(', ') : errors;
 
                 console.log('promise rejected: ', errors);
                 cSock.end(`HTTP/1.1 504 ${errors}\r\n\r\n`);
