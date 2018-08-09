@@ -35,8 +35,4 @@ proxies_on() {
     done
 }
 
-proxies_off
-
-proxies_on
-
 IFS=$PRE_IFS
