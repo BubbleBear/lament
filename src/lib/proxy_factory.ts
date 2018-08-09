@@ -178,7 +178,7 @@ export default class ProxyFactory {
     }
 
     private assembleHeaders(opts) {
-        const url = parse('http://' + opts.inner ? opts.inner.path : opts.path);
+        const url = parse('http://' + (opts.inner ? opts.inner.path : opts.path));
         const method = opts.inner && opts.inner.method ? opts.inner.method.toUpperCase() : 'GET';
         const httpVersion = opts.inner ? opts.inner.httpVersion : 1.1;
 
