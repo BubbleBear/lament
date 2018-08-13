@@ -136,11 +136,15 @@ export default class ProxyFactory {
             port: config ? config.port : this.config.server.listen || 5555,
             method: 'connect',
             path: encodedPath,
+            headers: {
+                'Connection': 'keep-alive',
+                'Proxy-Connection': 'keep-alive',
+            },
             inner: {
                 httpVersion: cReq.httpVersion,
                 method: cReq.method,
                 path: path,
-                headers: cReq.headers
+                headers: cReq.headers,
             }
         };
     }
