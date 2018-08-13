@@ -136,10 +136,10 @@ export default class ProxyFactory {
             port: config ? config.port : this.config.server.listen || 5555,
             method: 'connect',
             path: encodedPath,
-            headers: {
+            headers: cReq.httpVersion == '1.1' ? {
                 'Connection': 'keep-alive',
                 'Proxy-Connection': 'keep-alive',
-            },
+            } : {},
             inner: {
                 httpVersion: cReq.httpVersion,
                 method: cReq.method,
@@ -184,7 +184,7 @@ export default class ProxyFactory {
     private assembleHeaders(opts) {
         const url = parse('http://' + (opts.inner ? opts.inner.path : opts.path));
         const method = opts.inner && opts.inner.method ? opts.inner.method.toUpperCase() : 'GET';
-        const httpVersion = opts.inner ? opts.inner.httpVersion : 1.1;
+        const httpVersion = opts.inner ? opts.inner.httpVersion : '1.1';
 
         let headers = `${method} ${url.path} HTTP/${httpVersion}\r\n` +
             `connection: close\r\n`;
