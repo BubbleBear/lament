@@ -137,8 +137,8 @@ export default class ProxyFactory {
             method: 'connect',
             path: encodedPath,
             headers: cReq.httpVersion == '1.1' ? {
-                'Connection': 'keep-alive',
-                'Proxy-Connection': 'keep-alive',
+                // 'Connection': 'keep-alive',
+                // 'Proxy-Connection': 'keep-alive',
             } : {},
             inner: {
                 httpVersion: cReq.httpVersion,
