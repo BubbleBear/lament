@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-PASSWD='angingian'
+PASSWD=''
 
 PRE_IFS=$IFS
 
