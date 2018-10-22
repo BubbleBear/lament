@@ -9,6 +9,9 @@ const config: any = new Config;
 const proxyFacotry = new ProxyFacotry(config);
 
 export const server = http.createServer()
+    .on('listening', () => {
+        console.log(`listening on: ${config.server.listen}`)
+    })
     .on('connect', proxyFacotry.getServerProxy())
     .on('clientError', (err, sock) => {
         console.log('SERVER handler error: ', err.message);

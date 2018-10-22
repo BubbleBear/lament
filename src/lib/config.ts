@@ -31,7 +31,7 @@ export default class Config {
             server: {
                 listen: 5555,
             },
-        }
+        };
     }
 
     private importConfig() {

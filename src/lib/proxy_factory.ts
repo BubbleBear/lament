@@ -1,7 +1,6 @@
 import * as http from 'http';
 import * as net from 'net';
 import { parse } from 'url';
-import { Transform, Readable, Writable } from 'stream';
 import { promise, catchError } from './utils';
 import { DummyCipher, DummyDecipher } from './dummy';
 import Config from './config';
@@ -101,6 +100,9 @@ export default class ProxyFactory {
             const options = parse(path.indexOf('http') ? 'http://' + path : path);
 
             const sSock = (new net.Socket)
+                // .on('lookup', (...args) => {
+                //     console.log(args)
+                // })
                 .on('connect', () => {
                     sSock.removeAllListeners('timeout');
                     cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
@@ -123,7 +125,7 @@ export default class ProxyFactory {
                 'remote client socket',
             );
 
-            sSock.connect(Number(options.port) || 80, options.hostname,)
+            sSock.connect(Number(options.port) || 80, options.hostname,);
         }
     }
 
@@ -145,7 +147,7 @@ export default class ProxyFactory {
                 method: cReq.method,
                 path: path,
                 headers: cReq.headers,
-            }
+            },
         };
     }
 
