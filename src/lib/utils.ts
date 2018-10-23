@@ -1,4 +1,6 @@
 import * as net from 'net';
+import { Url } from 'url';
+import { connect, TLSSocket } from 'tls';
 
 export const promise = {
     or<T>(promises: Promise<T>[]): Promise<T> {
@@ -25,4 +27,20 @@ export function catchError(socket: net.Socket, tag?: string) {
             socket.destroy()
             // tag && console.log(`${tag}: ${e.message}`);
         });
+}
+
+export async function authenticate(url: { hostname, port } | Url): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const socket: TLSSocket = connect({
+            host: url.hostname,
+            port: url.port || 443,
+            rejectUnauthorized: false,
+        }, () => {
+            resolve(socket.authorized as Boolean);
+        });
+        
+        socket
+            .on('error', (err) => {})
+            .end('hello');
+    });
 }
