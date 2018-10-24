@@ -1,4 +1,5 @@
 import * as net from 'net';
+import * as fs from 'fs';
 import { Url } from 'url';
 import { connect, TLSSocket } from 'tls';
 
@@ -29,20 +30,20 @@ export function catchError(socket: net.Socket, tag?: string) {
         });
 }
 
-export async function authenticate(url: { hostname, port } | Url): Promise<any> {
+export async function authenticate(url: { hostname, port} | Url): Promise<any> {
     return new Promise((resolve, reject) => {
         const socket: TLSSocket = connect({
             host: url.hostname,
             port: url.port || 443,
-            // rejectUnauthorized: false,
+            rejectUnauthorized: false,
+            servername: url.hostname,
         }, () => {
             resolve(socket.authorized as Boolean);
         })
         
         socket
-            .on('error', (err) => { 
-                console.log(err);
-                resolve(false)
+            .on('error', (err) => {
+                resolve(true);
             })
             .end('hello');
     });
