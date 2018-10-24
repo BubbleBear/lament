@@ -30,7 +30,7 @@ export function catchError(socket: net.Socket, tag?: string) {
         });
 }
 
-export async function authenticate(url: { hostname, port} | Url): Promise<any> {
+export async function verifyCertificates(url: { hostname, port} | Url): Promise<any> {
     return new Promise((resolve, reject) => {
         const socket: TLSSocket = connect({
             host: url.hostname,

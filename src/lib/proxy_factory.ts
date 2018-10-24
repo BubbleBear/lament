@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as net from 'net';
 import { parse } from 'url';
-import { promise, catchError, authenticate } from './utils';
+import { promise, catchError, verifyCertificates } from './utils';
 import { DummyCipher, DummyDecipher } from './dummy';
 import Config from './config';
 
@@ -99,7 +99,7 @@ export default class ProxyFactory {
             const path = (new this.Decipher).decode(encodedPath);
             const options = parse(path.indexOf('http') ? 'http://' + path : path);
 
-            const auth: Boolean = await authenticate(options);
+            const cert: Boolean = await verifyCertificates(options);
             
             const sSock = (new net.Socket)
                 .on('connect', () => {
@@ -124,7 +124,7 @@ export default class ProxyFactory {
                 'remote client socket',
             );
 
-            if (auth === true) {
+            if (cert === true) {
                 sSock.connect({
                     port: Number(options.port) || 80,
                     host: options.hostname,
