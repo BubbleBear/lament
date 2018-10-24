@@ -34,13 +34,16 @@ export async function authenticate(url: { hostname, port } | Url): Promise<any> 
         const socket: TLSSocket = connect({
             host: url.hostname,
             port: url.port || 443,
-            rejectUnauthorized: false,
+            // rejectUnauthorized: false,
         }, () => {
             resolve(socket.authorized as Boolean);
-        });
+        })
         
         socket
-            .on('error', (err) => {})
+            .on('error', (err) => { 
+                console.log(err);
+                resolve(false)
+            })
             .end('hello');
     });
 }

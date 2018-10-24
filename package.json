@@ -10,6 +10,7 @@
     "lament": "index.ts"
   },
   "scripts": {
+    "start": "supervisor -e ts,js,json -x ts-node -- src",
     "debug": "node --inspect ./node_modules/ts-node/dist/bin.js src",
     "dev": "supervisor -w src,config -e ts,js,json -x ts-node -- src"
   },

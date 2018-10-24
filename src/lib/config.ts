@@ -26,10 +26,12 @@ export default class Config {
                         'port': 5555,
                     },
                 ],
-                enforce: {}
+                enforce: {},
+                timeout: 3000,
             },
             server: {
                 listen: 5555,
+                timeout: 3000,
             },
         };
     }

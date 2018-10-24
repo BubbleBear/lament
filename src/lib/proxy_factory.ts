@@ -109,7 +109,7 @@ export default class ProxyFactory {
                     cSock.pipe(new this.Decipher).pipe(sSock);
                     sSock.pipe(new this.Cipher).pipe(cSock);
                 })
-                .setTimeout(5000, () => {
+                .setTimeout(this.config.server.timeout, () => {
                     cSock.end();
                     sSock.destroy(new Error(`server timeout, host: ${path}`));
                 });
@@ -179,7 +179,7 @@ export default class ProxyFactory {
                     reject(err);
                     request.abort();
                 })
-                .setTimeout(5000, () => {
+                .setTimeout(this.config.client.timeout, () => {
                     request.emit('error', new Error('client timeout'));
                 });
 
