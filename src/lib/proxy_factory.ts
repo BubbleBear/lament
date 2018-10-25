@@ -29,6 +29,11 @@ export default class ProxyFactory {
                     'local client request connection',
                 );
 
+                catchError(
+                    cRes.connection,
+                    'local client response connection'
+                )
+
                 cRes.on('close', () => {
                     socket.end();
                 })
@@ -158,20 +163,20 @@ export default class ProxyFactory {
     private tunneling(options, sendHeaders?) {
         return new Promise((resolve, reject) => {
             const request = http.request(options)
-                .on('connect', (res: http.IncomingMessage, sock: net.Socket, head: Buffer) => {
-                    resolve(sock);
+                .on('connect', (res: http.IncomingMessage, socket: net.Socket, head: Buffer) => {
+                    resolve(socket);
 
-                    sock
+                    socket
                         .on('pipe', (src) => {
                             request.removeAllListeners('timeout');
                             if (sendHeaders) {
                                 let headers = this.getHeaders(options);
-                                sock.write((new this.Cipher).encode(headers));
+                                socket.write((new this.Cipher).encode(headers));
                             }
                         })
 
                     catchError(
-                        sock,
+                        socket,
                         'local server socket',
                     );
                 })

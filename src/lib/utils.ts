@@ -18,14 +18,14 @@ export const promise = {
                         rejects.length === promises.length && reject(rejects);
                     });
             }
-        })
+        });
     },
 };
 
 export function catchError(socket: net.Socket, tag?: string) {
     return socket
         .on('error', (e: Error) => {
-            socket.destroy()
+            socket.destroy();
             // tag && console.log(`${tag}: ${e.message}`);
         });
 }
@@ -39,7 +39,7 @@ export async function verifyCertificates(url: { hostname, port} | Url): Promise<
             servername: url.hostname,
         }, () => {
             resolve(socket.authorized as Boolean);
-        })
+        });
         
         socket
             .on('error', (err) => {

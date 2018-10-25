@@ -5,13 +5,13 @@ export abstract class BaseEncryption extends Transform {
         super(options);
 
         this
-        .on('error', err => {
-            console.log('cipher error: ', err)
-            this.destroy();
-        })
-        .on('end', () => {
-            this.push(null);
-        })
+            .on('error', err => {
+                console.log('cipher error: ', err)
+                this.destroy();
+            })
+            .on('end', () => {
+                this.push(null);
+            })
     }
 
     _transform(chunk, encoding, callback) {
