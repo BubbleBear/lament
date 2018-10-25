@@ -1,6 +1,6 @@
 export default class Config {
     constructor() {
-        return <any>this.merge(this.default(), this.importConfig());
+        return <any>this.merge(this.default(), this.custom());
     }
 
     private merge(obj1, obj2) {
@@ -36,7 +36,7 @@ export default class Config {
         };
     }
 
-    private importConfig() {
+    private custom() {
         const config = {};
         try {
             (<any>config).client = require('../../config/client.json');

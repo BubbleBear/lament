@@ -19,10 +19,10 @@ export default class ProxyFactory {
         this.Decipher = options.Decipher || DefaultDecryptor;
     }
 
-    public getLegacyProxy() {
+    public getRequestHandler() {
         return async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
             try {
-                const socket: net.Socket = <any>await this.abstractProxy(cReq);
+                const socket: net.Socket = <any>await this.pickTunneling(cReq);
 
                 catchError(
                     cReq.connection,
@@ -47,10 +47,10 @@ export default class ProxyFactory {
         }
     }
 
-    public getConnectProxy() {
+    public getConnectHandler() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             try {
-                const socket: net.Socket = <any>await this.abstractProxy(cReq);
+                const socket: net.Socket = <any>await this.pickTunneling(cReq);
 
                 catchError(
                     cSock,
@@ -72,7 +72,7 @@ export default class ProxyFactory {
         }
     }
 
-    private async abstractProxy(cReq: http.IncomingMessage, ...args) {
+    private async pickTunneling(cReq: http.IncomingMessage, ...args) {
         const client = this.config.client;
 
         for (const k of Object.keys(this.config.client.enforce)) {
@@ -93,7 +93,7 @@ export default class ProxyFactory {
         );
     }
 
-    public getServerProxy() {
+    public getServerHandler() {
         return async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
             const encodedPath = cReq.url;
             const path = (new this.Decipher).decode(encodedPath);
