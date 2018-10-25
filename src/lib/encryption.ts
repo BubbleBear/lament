@@ -1,6 +1,6 @@
 import { Transform } from 'stream';
 
-export abstract class Dummy extends Transform {
+export abstract class BaseEncryption extends Transform {
     constructor(options?) {
         super(options);
 
@@ -28,7 +28,7 @@ export abstract class Dummy extends Transform {
     }
 }
 
-export class DummyCipher extends Dummy {
+export class DefaultEncryptor extends BaseEncryption {
     protected handler(chunk: Buffer): Buffer {
         return Buffer.from(this.encode(chunk), 'binary');
     }
@@ -39,7 +39,7 @@ export class DummyCipher extends Dummy {
     }
 }
 
-export class DummyDecipher extends Dummy {
+export class DefaultDecryptor extends BaseEncryption {
     protected handler(chunk: Buffer): Buffer {
         return Buffer.from(this.decode(chunk), 'binary');
     }

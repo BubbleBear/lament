@@ -2,21 +2,21 @@ import * as http from 'http';
 import * as net from 'net';
 import { parse } from 'url';
 import { promise, catchError, verifyCertificates } from './utils';
-import { DummyCipher, DummyDecipher } from './dummy';
+import { DefaultEncryptor, DefaultDecryptor } from './encryption';
 import Config from './config';
 
 export default class ProxyFactory {
     private config;
 
-    private Cipher: typeof DummyCipher;
+    private Cipher: typeof DefaultEncryptor;
 
-    private Decipher: typeof DummyDecipher;
+    private Decipher: typeof DefaultDecryptor;
 
     constructor(config: Config, options?) {
         options || (options = {});
         this.config = config;
-        this.Cipher = options.Cipher || DummyCipher;
-        this.Decipher = options.Decipher || DummyDecipher;
+        this.Cipher = options.Cipher || DefaultEncryptor;
+        this.Decipher = options.Decipher || DefaultDecryptor;
     }
 
     public getLegacyProxy() {
@@ -77,13 +77,13 @@ export default class ProxyFactory {
 
         for (const k of Object.keys(this.config.client.enforce)) {
             if (cReq.url.indexOf(k) != -1) {
-                const connect = this.assembleOptions(cReq, client.remotes[client.enforce[k]]);
+                const connect = this.getTunnelingOptions(cReq, client.remotes[client.enforce[k]]);
                 return this.tunneling(connect, cReq.method != 'CONNECT');
             }
         }
 
         const connectList = client.remotes.map((v) => {
-            return this.assembleOptions(cReq, v);
+            return this.getTunnelingOptions(cReq, v);
         });
 
         return promise.or(
@@ -133,7 +133,7 @@ export default class ProxyFactory {
         }
     }
 
-    private assembleOptions(cReq: http.IncomingMessage, config) {
+    private getTunnelingOptions(cReq: http.IncomingMessage, config) {
         const path = cReq.url.replace(/^http:\/\//, '');
         const encodedPath = (new this.Cipher).encode(path);
 
@@ -165,7 +165,7 @@ export default class ProxyFactory {
                         .on('pipe', (src) => {
                             request.removeAllListeners('timeout');
                             if (sendHeaders) {
-                                let headers = this.assembleHeaders(options);
+                                let headers = this.getHeaders(options);
                                 sock.write((new this.Cipher).encode(headers));
                             }
                         })
@@ -187,7 +187,7 @@ export default class ProxyFactory {
         });
     }
 
-    private assembleHeaders(opts) {
+    private getHeaders(opts) {
         const url = parse('http://' + (opts.inner ? opts.inner.path : opts.path));
         const method = opts.inner && opts.inner.method ? opts.inner.method.toUpperCase() : 'GET';
         const httpVersion = opts.inner ? opts.inner.httpVersion : '1.1';
