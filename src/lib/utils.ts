@@ -22,14 +22,6 @@ export const promise = {
     },
 };
 
-export function catchError(socket: net.Socket, tag?: string) {
-    return socket
-        .on('error', (e: Error) => {
-            socket.destroy();
-            // tag && console.log(`${tag}: ${e.message}`);
-        });
-}
-
 export async function verifyCertificates(url: { hostname, port} | Url): Promise<any> {
     return new Promise((resolve, reject) => {
         const socket: TLSSocket = connect({

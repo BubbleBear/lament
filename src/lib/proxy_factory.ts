@@ -1,9 +1,11 @@
 import * as http from 'http';
 import * as net from 'net';
 import { parse } from 'url';
-import { promise, catchError, verifyCertificates } from './utils';
+import { promise, verifyCertificates } from './utils';
 import { DefaultEncryptor, DefaultDecryptor } from './encryption';
 import Config from './config';
+
+const VERBOSE = true;
 
 export default class ProxyFactory {
     private config;
@@ -24,15 +26,15 @@ export default class ProxyFactory {
             try {
                 const socket: net.Socket = <any>await this.pickTunneling(cReq);
 
-                catchError(
-                    cReq.connection,
-                    'local client request connection',
-                );
+                cReq.connection.once('error', (e) => {
+                    cReq.connection.destroy();
+                    VERBOSE && console.log(`client request socket error: ${e.message}, url: ${cReq.url}`);
+                });
 
-                catchError(
-                    cRes.connection,
-                    'local client response connection'
-                )
+                cRes.connection.once('error', (e) => {
+                    cRes.connection.destroy();
+                    VERBOSE && console.log(`client response socket error: ${e.message}, url: ${cReq.url}`);
+                });
 
                 cRes.on('close', () => {
                     socket.end();
@@ -45,7 +47,7 @@ export default class ProxyFactory {
                     return error.message;
                 }).join(', ') : errors;
 
-                console.log('promise rejected: ', errors);
+                VERBOSE && console.log('promise rejected: ', errors);
                 cRes.writeHead(504, errors);
                 cRes.end();
             }
@@ -57,10 +59,10 @@ export default class ProxyFactory {
             try {
                 const socket: net.Socket = <any>await this.pickTunneling(cReq);
 
-                catchError(
-                    cSock,
-                    'local client socket',
-                );
+                cSock.on('error', (e) => {
+                    cSock.destroy();
+                    VERBOSE && console.log(`client connect error: ${e.message}, url: ${cReq.url}`);
+                })
 
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 socket.write(head);
@@ -71,7 +73,7 @@ export default class ProxyFactory {
                     return error.message;
                 }).join(', ') : errors;
 
-                console.log('promise rejected: ', errors);
+                VERBOSE && console.log('promise rejected: ', errors);
                 cSock.end(`HTTP/1.1 504 ${errors}\r\n\r\n`);
             }
         }
@@ -114,20 +116,19 @@ export default class ProxyFactory {
                     cSock.pipe(new this.Decipher).pipe(sSock);
                     sSock.pipe(new this.Cipher).pipe(cSock);
                 })
+                .on('error', (e) => {
+                    sSock.destroy();
+                    VERBOSE && console.log(`server request error: ${e.message}`);
+                })
                 .setTimeout(this.config.server.timeout, () => {
                     cSock.end();
                     sSock.destroy(new Error(`server timeout, host: ${path}`));
                 });
 
-            catchError(
-                sSock,
-                'remote server socket',
-            );
-
-            catchError(
-                cSock,
-                'remote client socket',
-            );
+            cSock.on('error', (e) => {
+                cSock.destroy();
+                VERBOSE && console.log(`server response error: ${e.message}`);
+            });
 
             if (cert === true) {
                 sSock.connect({
@@ -167,18 +168,20 @@ export default class ProxyFactory {
                     resolve(socket);
 
                     socket
-                        .on('pipe', (src) => {
+                        .on('pipe', (src: net.Socket) => {
                             request.removeAllListeners('timeout');
                             if (sendHeaders) {
+                                src.pause();
                                 let headers = this.getHeaders(options);
-                                socket.write((new this.Cipher).encode(headers));
+                                socket.write((new this.Cipher).encode(headers), () => {
+                                    src.resume();
+                                });
                             }
                         })
-
-                    catchError(
-                        socket,
-                        'local server socket',
-                    );
+                        .on('error', (e) => {
+                            socket.destroy();
+                            VERBOSE && console.log(`tunneling error: ${e.message}, url: ${options.url}`);
+                        });
                 })
                 .on('error', err => {
                     reject(err);
