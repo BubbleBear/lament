@@ -26,19 +26,19 @@ export default class ProxyFactory {
             try {
                 const socket: net.Socket = <any>await this.pickTunneling(cReq);
 
-                cReq.connection.once('error', (e) => {
+                cReq.connection.on('error', (e) => {
                     cReq.connection.destroy();
                     VERBOSE && console.log(`client request socket error: ${e.message}, url: ${cReq.url}`);
                 });
 
-                cRes.connection.once('error', (e) => {
-                    cRes.connection.destroy();
-                    VERBOSE && console.log(`client response socket error: ${e.message}, url: ${cReq.url}`);
-                });
-
-                cRes.on('close', () => {
-                    socket.end();
-                })
+                cRes.connection
+                    .on('error', (e) => {
+                        cRes.connection.destroy();
+                        VERBOSE && console.log(`client response socket error: ${e.message}, url: ${cReq.url}`);
+                    })
+                    .on('close', () => {
+                        socket.end();
+                    })
 
                 cReq.pipe(new this.Cipher).pipe(socket, { end: false });
                 socket.pipe(new this.Decipher).pipe(cRes.connection);
