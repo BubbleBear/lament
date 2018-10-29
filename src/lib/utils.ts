@@ -26,7 +26,7 @@ export async function verifyCertificates(url: { hostname, port} | Url): Promise<
     return new Promise((resolve, reject) => {
         const socket: TLSSocket = connect({
             host: url.hostname,
-            port: url.port || 443,
+            port: url.port || 80,
             rejectUnauthorized: false,
             servername: url.hostname,
         }, () => {
