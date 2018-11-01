@@ -36,7 +36,9 @@ export async function verifyCertificates(url: { hostname, port} | Url): Promise<
         socket
             .on('error', (err) => {
                 resolve(true);
+                socket.destroy();
             })
+            .setTimeout(1500)
             .end('hello');
     });
 }
