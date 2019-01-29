@@ -1,7 +1,6 @@
-import * as net from 'net';
-import * as fs from 'fs';
 import { Url } from 'url';
 import { connect, TLSSocket } from 'tls';
+import { parse } from 'url';
 
 export const promise = {
     or<T>(promises: Promise<T>[]): Promise<T> {
@@ -41,4 +40,23 @@ export async function verifyCertificates(url: { hostname, port} | Url): Promise<
             .setTimeout(1500)
             .end('hello');
     });
+}
+
+export function getHeaderString(headerObject) {
+    const url = parse('http://' + headerObject.path);
+    const method = headerObject && headerObject.method ? headerObject.method.toUpperCase() : 'GET';
+    const httpVersion = headerObject ? headerObject.httpVersion : '1.1';
+
+    let headerString = `${method} ${url.path} HTTP/${httpVersion}\r\n` +
+        `connection: close\r\n`;
+    headerObject && headerObject.headers && headerObject.headers.host || (headerObject += `host: ${url.host}\r\n`);
+
+    if (headerObject && headerObject.headers) {
+        for (const key in headerObject.headers) {
+            if (key.includes('connection')) continue;
+            headerString += `${key}: ${headerObject.headers[key]}\r\n`
+        }
+    }
+    headerString += '\r\n';
+    return headerString;
 }

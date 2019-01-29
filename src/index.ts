@@ -12,7 +12,7 @@ export const server = http.createServer()
     .on('listening', () => {
         console.log(`listening on: ${config.server.listen}`)
     })
-    .on('connect', proxyFacotry.getServerHandler())
+    .on('connect', proxyFacotry.serverHandler)
     .on('clientError', (err, sock) => {
         console.log('SERVER handler error: ', err);
         sock.destroy();
@@ -20,8 +20,8 @@ export const server = http.createServer()
     .listen(config.server.listen);
 
 export const client = http.createServer()
-    .on('request', proxyFacotry.getRequestHandler())
-    .on('connect', proxyFacotry.getConnectHandler())
+    .on('request', proxyFacotry.requestHandler)
+    .on('connect', proxyFacotry.connectHanlder)
     .on('clientError', (err, sock) => {
         if (!err.syscall) {
             console.log('CLIENT handler error: ', err);
