@@ -28,7 +28,27 @@ export abstract class BaseEncryption extends Transform {
     }
 }
 
-export class DefaultEncryptor extends BaseEncryption {
+export interface Encryptor extends BaseEncryption {
+    encode(target: Buffer | string): string;
+}
+
+export interface EncryptorConstructor {
+    new (): Encryptor;
+}
+
+export declare const Encryptor: EncryptorConstructor;
+
+export interface Decryptor extends BaseEncryption {
+    decode(target: Buffer | string): string;
+}
+
+export interface DecryptorConstructor {
+    new (): Decryptor;
+}
+
+export declare const Decryptor: DecryptorConstructor;
+
+export class DefaultEncryptor extends BaseEncryption implements Encryptor {
     protected handler(chunk: Buffer): Buffer {
         return Buffer.from(this.encode(chunk), 'binary');
     }
@@ -39,7 +59,7 @@ export class DefaultEncryptor extends BaseEncryption {
     }
 }
 
-export class DefaultDecryptor extends BaseEncryption {
+export class DefaultDecryptor extends BaseEncryption implements Decryptor {
     protected handler(chunk: Buffer): Buffer {
         return Buffer.from(this.decode(chunk), 'binary');
     }

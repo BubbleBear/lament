@@ -1,3 +1,22 @@
+export default interface Config {
+    client: {
+        listen: number;
+        remotes: {
+            host: string;
+            port: string;
+        }[];
+        enforce: {
+            [prop: string]: number;
+        };
+        timeout: number;
+    };
+    server: {
+        listen: number;
+        timeout: number;
+    };
+    [prop: string]: any;
+}
+
 export default class Config {
     constructor() {
         return <any>this.merge(this.default(), this.custom());
@@ -22,8 +41,8 @@ export default class Config {
                 listen: 6666,
                 remotes: [
                     {
-                        'host': 'localhost',
-                        'port': 5555,
+                        host: 'localhost',
+                        port: 5555,
                     },
                 ],
                 enforce: {},

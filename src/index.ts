@@ -4,14 +4,13 @@ import Config from './lib/config';
 
 const config: any = new Config;
 
+config.verbose = true;
+
 // console.dir(config, { depth: null });
 
 const proxyFacotry = new ProxyFacotry(config);
 
 export const server = http.createServer()
-    .on('listening', () => {
-        console.log(`listening on: ${config.server.listen}`)
-    })
     .on('connect', proxyFacotry.serverHandler)
     .on('clientError', (err, sock) => {
         console.log('SERVER handler error: ', err);
@@ -20,6 +19,9 @@ export const server = http.createServer()
     .listen(config.server.listen);
 
 export const client = http.createServer()
+    .on('listening', () => {
+        console.log(`listening on: ${config.client.listen}`)
+    })
     .on('request', proxyFacotry.requestHandler)
     .on('connect', proxyFacotry.connectHanlder)
     .on('clientError', (err, sock) => {

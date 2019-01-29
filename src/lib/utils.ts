@@ -42,7 +42,7 @@ export async function verifyCertificates(url: { hostname, port} | Url): Promise<
     });
 }
 
-export function getHeaderString(headerObject) {
+export function getHeaderString(headerObject: any): string {
     const url = parse('http://' + headerObject.path);
     const method = headerObject && headerObject.method ? headerObject.method.toUpperCase() : 'GET';
     const httpVersion = headerObject ? headerObject.httpVersion : '1.1';
