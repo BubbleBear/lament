@@ -41,8 +41,6 @@ export default class Tunnel {
     public connect(req: http.IncomingMessage, remote: RemoteOptions): Promise<net.Socket> {
         const options = this.getOptions(req, remote);
 
-        // console.log(options)
-
         return new Promise((resolve, reject) => {
             const request = http.request(options)
                 .on('connect', (res: http.IncomingMessage, socket: net.Socket, head: Buffer) => {
