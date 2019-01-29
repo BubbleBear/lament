@@ -108,8 +108,8 @@ export default class ProxyFactory {
 
         if (cert === true) {
             sSock.connect({
-                port: Number(options.port) || 80,
                 host: options.hostname,
+                port: Number(options.port) || 80,
             });
         }
     }
