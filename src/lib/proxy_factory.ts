@@ -2,8 +2,8 @@ import * as http from 'http';
 import * as net from 'net';
 import { parse } from 'url';
 
-import { promise, verifyCertificates, getHeaderString } from './utils';
-import { Encryptor, EncryptorConstructor, Decryptor, DecryptorConstructor, DefaultEncryptor, DefaultDecryptor } from './encryption';
+import { verifyCertificates } from './utils';
+import { Encryptor, Decryptor, DefaultEncryptor, DefaultDecryptor } from './encryption';
 import Tunnel from './tunnel';
 import Config from './config';
 
@@ -12,9 +12,9 @@ export default class ProxyFactory {
 
     private tunnel: Tunnel;
 
-    private Encryptor: EncryptorConstructor;
+    private Encryptor: typeof Encryptor;
 
-    private Decryptor: DecryptorConstructor;
+    private Decryptor: typeof Decryptor;
 
     constructor(config: Config) {
         this.config = config;

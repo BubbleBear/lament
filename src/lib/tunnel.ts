@@ -2,44 +2,45 @@ import * as http from 'http';
 import * as net from 'net';
 
 import { promise, getHeaderString } from './utils';
-import { DefaultEncryptor, DefaultDecryptor } from './encryption';
+import { Encryptor, Decryptor, DefaultEncryptor, DefaultDecryptor } from './encryption';
 import Config from './config';
+
+export interface RemoteOptions {
+    host: string;
+    port: string;
+}
 
 export default class Tunnel {
     private config: Config;
 
-    private Cipher: typeof DefaultEncryptor;
+    private Cryptor: typeof Encryptor;
 
-    private Decipher: typeof DefaultDecryptor;
+    private Decryptor: typeof Decryptor;
 
     constructor(config: Config) {
         this.config = config;
-        this.Cipher = config.Cipher || DefaultEncryptor;
-        this.Decipher = config.Decipher || DefaultDecryptor;
+        this.Cryptor = config.Cryptor || DefaultEncryptor;
+        this.Decryptor = config.Decryptor || DefaultDecryptor;
     }
 
-    public async race(cReq: http.IncomingMessage, ...args) {
-        const client = this.config.client;
-
+    public async race(req: http.IncomingMessage, remotes: RemoteOptions[] = this.config.client.remotes) {
         for (const k of Object.keys(this.config.client.enforce)) {
-            if (cReq.url.indexOf(k) != -1) {
-                const connect = this.getTunnelingOptions(cReq, client.remotes[client.enforce[k]]);
-                return this.tunneling(connect, cReq.method != 'CONNECT');
+            if (req.url.indexOf(k) != -1) {
+                const remote = remotes[this.config.client.enforce[k]];
+                return this.connect(req, remote);
             }
         }
 
-        const connectList = client.remotes.map((v) => {
-            return this.getTunnelingOptions(cReq, v);
-        });
-
         return promise.or(
-            connectList.map(
-                v => this.tunneling(v, cReq.method != 'CONNECT')
+            remotes.map(
+                remote => this.connect(req, remote)
             )
         );
     }
 
-    public tunneling(options, sendHeaders?): Promise<net.Socket> {
+    public connect(req: http.IncomingMessage, remote: RemoteOptions): Promise<net.Socket> {
+        const options = this.getOptions(req, remote);
+
         return new Promise((resolve, reject) => {
             const request = http.request(options)
                 .on('connect', (res: http.IncomingMessage, socket: net.Socket, head: Buffer) => {
@@ -48,17 +49,17 @@ export default class Tunnel {
                     socket
                         .on('pipe', (src: net.Socket) => {
                             request.removeAllListeners('timeout');
-                            if (sendHeaders) {
+                            if (req.method !== 'CONNECT') {
                                 src.pause();
                                 let headers = getHeaderString(options.inner);
-                                socket.write((new this.Cipher).encode(headers), () => {
+                                socket.write((new this.Cryptor).encode(headers), () => {
                                     src.resume();
                                 });
                             }
                         })
                         .on('error', (e) => {
                             socket.destroy();
-                            this.config.verbose && console.log(`tunneling error: ${e.message}, url: ${options.url}`);
+                            this.config.verbose && console.log(`tunneling error: ${e.message}, url: ${req.url}`);
                         });
                 })
                 .on('error', err => {
@@ -73,24 +74,24 @@ export default class Tunnel {
         });
     }
 
-    private getTunnelingOptions(cReq: http.IncomingMessage, options) {
-        const path = cReq.url.replace(/^http:\/\//, '');
-        const encodedPath = (new this.Cipher).encode(path);
+    private getOptions(req: http.IncomingMessage, remote: RemoteOptions) {
+        const path = req.url.replace(/^http:\/\//, '');
+        const encodedPath = (new this.Cryptor).encode(path);
 
         return {
-            hostname: options ? options.host : 'localhost',
-            port: options ? options.port : this.config.server.listen || 5555,
+            hostname: remote ? remote.host : 'localhost',
+            port: remote ? remote.port : this.config.server.listen || 5555,
             method: 'connect',
             path: encodedPath,
-            headers: cReq.httpVersion == '1.1' ? {
+            headers: req.httpVersion == '1.1' ? {
                 // 'Connection': 'keep-alive',
                 // 'Proxy-Connection': 'keep-alive',
             } : {},
             inner: {
-                httpVersion: cReq.httpVersion,
-                method: cReq.method,
+                httpVersion: req.httpVersion,
+                method: req.method,
                 path: path,
-                headers: cReq.headers,
+                headers: req.headers,
             },
         };
     }

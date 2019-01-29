@@ -45,7 +45,7 @@ export async function verifyCertificates(url: { hostname, port} | Url): Promise<
 export function getHeaderString(headerObject: any): string {
     const url = parse('http://' + headerObject.path);
     const method = headerObject && headerObject.method ? headerObject.method.toUpperCase() : 'GET';
-    const httpVersion = headerObject ? headerObject.httpVersion : '1.1';
+    const httpVersion = headerObject ? headerObject.httpVersion : '1.0';
 
     let headerString = `${method} ${url.path} HTTP/${httpVersion}\r\n` +
         `connection: close\r\n`;
