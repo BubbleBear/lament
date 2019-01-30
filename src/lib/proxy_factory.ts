@@ -25,24 +25,24 @@ export default class ProxyFactory {
 
     public requestHandler = async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
         try {
-            const socket: net.Socket = <any>await this.tunnel.race(cReq);
+            const sSock: net.Socket = <any>await this.tunnel.race(cReq);
 
-            cReq.connection.on('error', (e) => {
-                cReq.connection.destroy();
-                this.config.verbose && console.log(`client request socket error: ${e.message}, url: ${cReq.url}`);
-            });
+            const cSock = cReq.connection;
 
-            cRes.connection
+            cSock
+                .on('data', (chunk) => {
+                    chunk && console.log(chunk.toString())
+                })
                 .on('error', (e) => {
-                    cRes.connection.destroy();
-                    this.config.verbose && console.log(`client response socket error: ${e.message}, url: ${cReq.url}`);
+                    cSock.destroy();
+                    this.config.verbose && console.log(`client request socket error: ${e.message}, url: ${cReq.url}`);
                 })
                 .on('close', () => {
-                    socket.end();
-                })
+                    sSock.end();
+                });
 
-            cReq.pipe(new this.Encryptor).pipe(socket, { end: false });
-            socket.pipe(new this.Decryptor).pipe(cRes.connection);
+            cReq.pipe(new this.Encryptor).pipe(sSock, { end: false });
+            sSock.pipe(new this.Decryptor).pipe(cSock);
         } catch (errors) {
             errors = Array.isArray(errors) ? errors.map((error: Error) => {
                 return error.message;
@@ -56,7 +56,7 @@ export default class ProxyFactory {
 
     public connectHanlder = async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
         try {
-            const socket: net.Socket = <any>await this.tunnel.race(cReq);
+            const sSock: net.Socket = <any>await this.tunnel.race(cReq);
 
             cSock.on('error', (e) => {
                 cSock.destroy();
@@ -64,9 +64,9 @@ export default class ProxyFactory {
             })
 
             cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-            socket.write(head);
-            cSock.pipe(new this.Encryptor).pipe(socket);
-            socket.pipe(new this.Decryptor).pipe(cSock);
+            sSock.write(head);
+            cSock.pipe(new this.Encryptor).pipe(sSock);
+            sSock.pipe(new this.Decryptor).pipe(cSock);
         } catch (errors) {
             errors = Array.isArray(errors) ? errors.map((error: Error) => {
                 return error.message;
@@ -93,12 +93,12 @@ export default class ProxyFactory {
                 sSock.pipe(new this.Encryptor).pipe(cSock);
             })
             .on('error', (e) => {
+                cSock.end();
                 sSock.destroy();
                 this.config.verbose && console.log(`server request error: ${e.message}`);
             })
             .setTimeout(this.config.server.timeout, () => {
-                cSock.end();
-                sSock.destroy(new Error(`server timeout, host: ${path}`));
+                sSock.emit('error', new Error(`server timeout, host: ${path}`));
             });
 
         cSock.on('error', (e) => {

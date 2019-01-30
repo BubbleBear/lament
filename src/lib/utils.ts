@@ -39,6 +39,10 @@ export async function verifyCertificates(url: { hostname, port} | Url): Promise<
             })
             .setTimeout(1500)
             .end('hello');
+    })
+    .catch((error) => {
+        console.log('failed verifying certificates: ', error);
+        return false;
     });
 }
 
