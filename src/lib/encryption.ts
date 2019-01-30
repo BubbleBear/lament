@@ -9,7 +9,7 @@ export abstract class BaseEncryption extends Transform {
                 console.log('cipher error: ', err)
                 this.destroy();
             })
-            .on('end', () => {
+            .on('finish', () => {
                 this.push(null);
             })
     }
@@ -55,7 +55,7 @@ export class DefaultEncryptor extends BaseEncryption implements Encryptor {
 
     public encode(target: Buffer | string): string  {
         typeof target === 'string' && (target = Buffer.from(target, 'binary'));
-        return this.reverseBit(<Buffer>target).toString('hex');
+        return this.reverseBit(target).toString('hex');
     }
 }
 
