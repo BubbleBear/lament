@@ -30,9 +30,6 @@ export default class ProxyFactory {
             const cSock = cReq.connection;
 
             cSock
-                .on('data', (chunk) => {
-                    chunk && console.log(chunk.toString())
-                })
                 .on('error', (e) => {
                     cSock.destroy();
                     this.config.verbose && console.log(`client request socket error: ${e.message}, url: ${cReq.url}`);
