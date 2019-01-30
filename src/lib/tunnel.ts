@@ -57,13 +57,13 @@ export default class Tunnel {
                                 });
                             }
                         })
-                        .on('error', (e) => {
+                        .on('error', (error) => {
                             socket.destroy();
-                            this.config.verbose && console.log(`tunneling error: ${e.message}, url: ${req.url}`);
+                            this.config.verbose && console.log(`tunneling error: ${error.message}, url: ${req.url}`);
                         });
                 })
-                .on('error', err => {
-                    reject(err);
+                .on('error', error => {
+                    reject(error);
                     request.abort();
                 })
                 .setTimeout(this.config.client.timeout, () => {

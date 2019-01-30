@@ -30,9 +30,10 @@ export default class ProxyFactory {
             const cSock = cReq.connection;
 
             cSock
-                .on('error', (e) => {
+                .on('error', (error) => {
                     cSock.destroy();
-                    this.config.verbose && console.log(`client request socket error: ${e.message}, url: ${cReq.url}`);
+                    console.log(error)
+                    this.config.verbose && console.log(`client request socket error: ${error.message}, url: ${cReq.url}`);
                 })
                 .on('close', () => {
                     sSock.end();
@@ -55,9 +56,9 @@ export default class ProxyFactory {
         try {
             const sSock: net.Socket = <any>await this.tunnel.race(cReq);
 
-            cSock.on('error', (e) => {
+            cSock.on('error', (error) => {
                 cSock.destroy();
-                this.config.verbose && console.log(`client connect error: ${e.message}, url: ${cReq.url}`);
+                this.config.verbose && console.log(`client connect error: ${error.message}, url: ${cReq.url}`);
             })
 
             cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
@@ -89,18 +90,18 @@ export default class ProxyFactory {
                 cSock.pipe(new this.Decryptor).pipe(sSock);
                 sSock.pipe(new this.Encryptor).pipe(cSock);
             })
-            .on('error', (e) => {
+            .on('error', (error) => {
                 cSock.end();
                 sSock.destroy();
-                this.config.verbose && console.log(`server request error: ${e.message}`);
+                this.config.verbose && console.log(`server request error: ${error.message}`);
             })
             .setTimeout(this.config.server.timeout, () => {
                 sSock.emit('error', new Error(`server timeout, host: ${path}`));
             });
 
-        cSock.on('error', (e) => {
+        cSock.on('error', (error) => {
             cSock.destroy();
-            this.config.verbose && console.log(`server response error: ${e.message}`);
+            this.config.verbose && console.log(`server response error: ${error.message}`);
         });
 
         if (cert === true) {

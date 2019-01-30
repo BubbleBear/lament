@@ -12,8 +12,8 @@ export const promise = {
                     .then((result: any) => {
                         resolve(result);
                     })
-                    .catch((e: Error) => {
-                        rejects.push(e);
+                    .catch((error: Error) => {
+                        rejects.push(error);
                         rejects.length === promises.length && reject(rejects);
                     });
             }
@@ -33,7 +33,7 @@ export async function verifyCertificates(url: { hostname, port} | Url): Promise<
         });
         
         socket
-            .on('error', (err) => {
+            .on('error', (error) => {
                 resolve(true);
                 socket.destroy();
             })
