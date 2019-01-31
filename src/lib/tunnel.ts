@@ -10,6 +10,8 @@ export interface RemoteOptions {
     port: string;
 }
 
+const INNER = Symbol.for('Tunnel.option.inner');
+
 export default class Tunnel {
     private config: Config;
 
@@ -56,7 +58,7 @@ export default class Tunnel {
                             request.removeAllListeners('timeout');
                             if (req.method !== 'CONNECT') {
                                 src.pause();
-                                const headers = getHeaderString(options.inner);
+                                const headers = getHeaderString(options[INNER]);
                                 socket.write((new this.Encryptor).encode(headers), () => {
                                     src.resume();
                                 });
@@ -88,7 +90,7 @@ export default class Tunnel {
                 // 'Connection': 'keep-alive',
                 // 'Proxy-Connection': 'keep-alive',
             } : {},
-            inner: {
+            [INNER]: {
                 httpVersion: req.httpVersion,
                 method: req.method,
                 path: path,

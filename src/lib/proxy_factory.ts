@@ -51,7 +51,7 @@ export default class ProxyFactory {
         }
     }
 
-    public connectHanlder = async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
+    public connectHandler = async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
         try {
             const sSock: net.Socket = await this.tunnel.race(cReq);
 
