@@ -5,13 +5,13 @@ export abstract class Cypher extends Transform {
         super(options);
 
         this
-            .on('error', err => {
-                console.log('cipher error: ', err)
+            .on('error', (error) => {
+                console.log('cypher error: ', error)
                 this.destroy();
             })
             .on('finish', () => {
                 this.push(null);
-            })
+            });
     }
 
     _transform(chunk, encoding, callback) {

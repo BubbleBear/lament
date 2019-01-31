@@ -32,7 +32,6 @@ export default class ProxyFactory {
             cSock
                 .on('error', (error) => {
                     cSock.destroy();
-                    console.log(error)
                     this.config.verbose && console.log(`client request socket error: ${error.message}, url: ${cReq.url}`);
                 })
                 .on('close', () => {
