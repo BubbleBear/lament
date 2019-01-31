@@ -13,53 +13,54 @@ export interface RemoteOptions {
 export default class Tunnel {
     private config: Config;
 
-    private Cryptor: typeof Encryptor;
+    private Encryptor: typeof Encryptor;
 
     private Decryptor: typeof Decryptor;
 
     constructor(config: Config) {
         this.config = config;
-        this.Cryptor = config.Cryptor || DefaultEncryptor;
+        this.Encryptor = config.Encryptor || DefaultEncryptor;
         this.Decryptor = config.Decryptor || DefaultDecryptor;
     }
 
     public async race(req: http.IncomingMessage, remotes: RemoteOptions[] = this.config.client.remotes) {
+        // todo:
+        // low performance simple implementation for now
         for (const k of Object.keys(this.config.client.enforce)) {
             if (req.url.indexOf(k) != -1) {
                 const remote = remotes[this.config.client.enforce[k]];
-                return this.connect(req, remote);
+                return this.dig(req, remote);
             }
         }
 
         return promise.or(
             remotes.map(
-                remote => this.connect(req, remote)
+                remote => this.dig(req, remote)
             )
         );
     }
 
-    public connect(req: http.IncomingMessage, remote: RemoteOptions): Promise<net.Socket> {
+    public async dig(req: http.IncomingMessage, remote: RemoteOptions): Promise<net.Socket> {
         const options = this.getOptions(req, remote);
 
-        return new Promise((resolve, reject) => {
+        return new Promise<net.Socket>((resolve, reject) => {
             const request = http.request(options)
                 .on('connect', (res: http.IncomingMessage, socket: net.Socket, head: Buffer) => {
                     resolve(socket);
 
                     socket
+                        .on('end', () => {
+                            socket.end();
+                        })
                         .on('pipe', (src: net.Socket) => {
                             request.removeAllListeners('timeout');
                             if (req.method !== 'CONNECT') {
                                 src.pause();
                                 const headers = getHeaderString(options.inner);
-                                socket.write((new this.Cryptor).encode(headers), () => {
+                                socket.write((new this.Encryptor).encode(headers), () => {
                                     src.resume();
                                 });
                             }
-                        })
-                        .on('error', (error) => {
-                            socket.destroy();
-                            this.config.verbose && console.log(`tunneling error: ${error.message}, url: ${req.url}`);
                         });
                 })
                 .on('error', error => {
@@ -76,7 +77,7 @@ export default class Tunnel {
 
     private getOptions(req: http.IncomingMessage, remote: RemoteOptions) {
         const path = req.url.replace(/^http:\/\//, '');
-        const encodedPath = (new this.Cryptor).encode(path);
+        const encodedPath = (new this.Encryptor).encode(path);
 
         return {
             hostname: remote ? remote.host : 'localhost',

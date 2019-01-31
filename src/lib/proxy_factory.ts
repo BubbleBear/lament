@@ -25,7 +25,7 @@ export default class ProxyFactory {
 
     public requestHandler = async (cReq: http.IncomingMessage, cRes: http.ServerResponse) => {
         try {
-            const sSock: net.Socket = <any>await this.tunnel.race(cReq);
+            const sSock: net.Socket = await this.tunnel.race(cReq);
 
             const cSock = cReq.connection;
 
@@ -35,7 +35,7 @@ export default class ProxyFactory {
                     this.config.verbose && console.log(`client request socket error: ${error.message}, url: ${cReq.url}`);
                 })
                 .on('close', () => {
-                    sSock.end();
+                    sSock.destroy();
                 });
 
             cReq.pipe(new this.Encryptor).pipe(sSock, { end: false });
@@ -53,12 +53,13 @@ export default class ProxyFactory {
 
     public connectHanlder = async (cReq: http.IncomingMessage, cSock: net.Socket, head: Buffer) => {
         try {
-            const sSock: net.Socket = <any>await this.tunnel.race(cReq);
+            const sSock: net.Socket = await this.tunnel.race(cReq);
 
-            cSock.on('error', (error) => {
-                cSock.destroy();
-                this.config.verbose && console.log(`client connect error: ${error.message}, url: ${cReq.url}`);
-            })
+            cSock
+                .on('error', (error) => {
+                    cSock.destroy();
+                    this.config.verbose && console.log(`client connect error: ${error.message}, url: ${cReq.url}`);
+                });
 
             cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
             sSock.write(head);
@@ -79,8 +80,8 @@ export default class ProxyFactory {
         const path = (new this.Decryptor).decode(encodedPath);
         const options = parse(path.indexOf('http') ? 'http://' + path : path);
 
-        const cert: Boolean = await verifyCertificates(options);
-        
+        const cert: boolean = await verifyCertificates(options);
+
         const sSock = (new net.Socket)
             .on('connect', () => {
                 sSock.removeAllListeners('timeout');
@@ -98,10 +99,14 @@ export default class ProxyFactory {
                 sSock.emit('error', new Error(`server timeout, host: ${path}`));
             });
 
-        cSock.on('error', (error) => {
-            cSock.destroy();
-            this.config.verbose && console.log(`server response error: ${error.message}`);
-        });
+        cSock
+            .on('end', () => {
+                cSock.end();
+            })
+            .on('error', (error) => {
+                cSock.destroy();
+                this.config.verbose && console.log(`server response error: ${error.message}`);
+            });
 
         if (cert === true) {
             sSock.connect({

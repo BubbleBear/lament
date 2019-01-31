@@ -8,9 +8,6 @@ export abstract class Cypher extends Transform {
             .on('error', (error) => {
                 console.log('cypher error: ', error)
                 this.destroy();
-            })
-            .on('finish', () => {
-                this.push(null);
             });
     }
 
@@ -33,7 +30,7 @@ export interface Encryptor extends Cypher {
 }
 
 export interface EncryptorConstructor {
-    new (): Encryptor;
+    new(): Encryptor;
 }
 
 export declare const Encryptor: EncryptorConstructor;
@@ -43,7 +40,7 @@ export interface Decryptor extends Cypher {
 }
 
 export interface DecryptorConstructor {
-    new (): Decryptor;
+    new(): Decryptor;
 }
 
 export declare const Decryptor: DecryptorConstructor;
@@ -53,7 +50,7 @@ export class DefaultEncryptor extends Cypher implements Encryptor {
         return Buffer.from(this.encode(chunk), 'binary');
     }
 
-    public encode(target: Buffer | string): string  {
+    public encode(target: Buffer | string): string {
         typeof target === 'string' && (target = Buffer.from(target, 'binary'));
         return this.reverseBit(target).toString('hex');
     }

@@ -9,7 +9,7 @@ export const promise = {
 
             for (const promise of promises) {
                 promise
-                    .then((result: any) => {
+                    .then((result: T) => {
                         resolve(result);
                     })
                     .catch((error: Error) => {
@@ -21,15 +21,15 @@ export const promise = {
     },
 };
 
-export async function verifyCertificates(url: { hostname, port} | Url): Promise<any> {
-    return new Promise((resolve, reject) => {
+export async function verifyCertificates(url: { hostname, port} | Url): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
         const socket: TLSSocket = connect({
             host: url.hostname,
             port: url.port || 80,
             rejectUnauthorized: false,
             servername: url.hostname,
         }, () => {
-            resolve(socket.authorized as Boolean);
+            resolve(socket.authorized as boolean);
         });
         
         socket
@@ -42,7 +42,7 @@ export async function verifyCertificates(url: { hostname, port} | Url): Promise<
     })
     .catch((error) => {
         console.log('failed verifying certificates: ', error);
-        return false;
+        return true;
     });
 }
 
