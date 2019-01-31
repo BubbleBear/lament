@@ -3,7 +3,7 @@ import * as net from 'net';
 import { parse } from 'url';
 
 import { verifyCertificates } from './utils';
-import { Encryptor, Decryptor, DefaultEncryptor, DefaultDecryptor } from './encryption';
+import { Encryptor, Decryptor, DefaultEncryptor, DefaultDecryptor } from './cypher';
 import Tunnel from './tunnel';
 import Config from './config';
 

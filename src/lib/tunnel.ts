@@ -2,7 +2,7 @@ import * as http from 'http';
 import * as net from 'net';
 
 import { promise, getHeaderString } from './utils';
-import { Encryptor, Decryptor, DefaultEncryptor, DefaultDecryptor } from './encryption';
+import { Encryptor, Decryptor, DefaultEncryptor, DefaultDecryptor } from './cypher';
 import Config from './config';
 
 export interface RemoteOptions {

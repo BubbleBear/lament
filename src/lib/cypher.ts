@@ -1,6 +1,6 @@
 import { Transform } from 'stream';
 
-export abstract class BaseEncryption extends Transform {
+export abstract class Cypher extends Transform {
     constructor(options?) {
         super(options);
 
@@ -28,7 +28,7 @@ export abstract class BaseEncryption extends Transform {
     }
 }
 
-export interface Encryptor extends BaseEncryption {
+export interface Encryptor extends Cypher {
     encode(target: Buffer | string): string;
 }
 
@@ -38,7 +38,7 @@ export interface EncryptorConstructor {
 
 export declare const Encryptor: EncryptorConstructor;
 
-export interface Decryptor extends BaseEncryption {
+export interface Decryptor extends Cypher {
     decode(target: Buffer | string): string;
 }
 
@@ -48,7 +48,7 @@ export interface DecryptorConstructor {
 
 export declare const Decryptor: DecryptorConstructor;
 
-export class DefaultEncryptor extends BaseEncryption implements Encryptor {
+export class DefaultEncryptor extends Cypher implements Encryptor {
     protected handler(chunk: Buffer): Buffer {
         return Buffer.from(this.encode(chunk), 'binary');
     }
@@ -59,7 +59,7 @@ export class DefaultEncryptor extends BaseEncryption implements Encryptor {
     }
 }
 
-export class DefaultDecryptor extends BaseEncryption implements Decryptor {
+export class DefaultDecryptor extends Cypher implements Decryptor {
     protected handler(chunk: Buffer): Buffer {
         return Buffer.from(this.decode(chunk), 'binary');
     }
