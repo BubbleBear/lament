@@ -1,6 +1,7 @@
 import { Url } from 'url';
 import { connect, TLSSocket } from 'tls';
 import { parse } from 'url';
+import { Readable, Writable, Duplex } from 'stream';
 
 export const promise = {
     or<T>(promises: Promise<T>[]): Promise<T> {
@@ -63,4 +64,36 @@ export function getHeaderString(headerObject: any): string {
     }
     headerString += '\r\n';
     return headerString;
+}
+
+interface PipeWrapper<T> {
+    stream: T;
+    options: any;
+}
+
+type Head = Readable | Duplex;
+
+type Rest = Writable | Duplex;
+
+export function pipe(src: Head | PipeWrapper<Head>,
+    ...rest: (Rest | PipeWrapper<Rest>)[]) {
+    for (let srcIdx = 0; srcIdx < arguments.length - 1; srcIdx++) {
+        const srcPkg = arguments[srcIdx];
+        const dstPkg = arguments[srcIdx + 1];
+
+        const src: Head = srcPkg instanceof Readable ? srcPkg : srcPkg.stream;
+        const dst: Rest = dstPkg instanceof Writable ? dstPkg : dstPkg.stream;
+
+        src
+            .on('close', () => {
+                dst && dst.destroy();
+            })
+
+        dst
+            .on('close', () => {
+                src && src.destroy();
+            })
+
+        src.pipe(dst, dstPkg.options);
+    }
 }

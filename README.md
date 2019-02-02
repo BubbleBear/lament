@@ -3,6 +3,8 @@ a tunneling proxy based on connect method
 
 it's still a prototype and to be polished in the future yet.
 
+this is simply for study purpose!
+
 ## how to deploy
 before running the scripts you need to create 2 config files, one named
 config/client.json, another config/server.json.

@@ -2,7 +2,7 @@ import * as http from 'http';
 import * as net from 'net';
 import { parse } from 'url';
 
-import { verifyCertificates } from './utils';
+import { verifyCertificates, pipe } from './utils';
 import { Encryptor, Decryptor, DefaultEncryptor, DefaultDecryptor } from './cypher';
 import Tunnel from './tunnel';
 import Config from './config';
@@ -33,13 +33,15 @@ export default class ProxyFactory {
                 .on('error', (error) => {
                     cSock.destroy();
                     this.config.verbose && console.log(`client request socket error: ${error.message}, url: ${cReq.url}`);
-                })
-                .on('close', () => {
-                    sSock.destroy();
                 });
 
-            cReq.pipe(new this.Encryptor).pipe(sSock, { end: false });
-            sSock.pipe(new this.Decryptor).pipe(cSock);
+            pipe(cReq, new this.Encryptor, {
+                stream: sSock,
+                options: {
+                    end: false,
+                },
+            });
+            pipe(sSock, new this.Decryptor, cSock);
         } catch (errors) {
             errors = Array.isArray(errors) ? errors.map((error: Error) => {
                 return error.message;
@@ -63,8 +65,8 @@ export default class ProxyFactory {
 
             cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
             sSock.write(head);
-            cSock.pipe(new this.Encryptor).pipe(sSock);
-            sSock.pipe(new this.Decryptor).pipe(cSock);
+            pipe(cSock, new this.Encryptor, sSock);
+            pipe(sSock, new this.Decryptor, cSock);
         } catch (errors) {
             errors = Array.isArray(errors) ? errors.map((error: Error) => {
                 return error.message;
@@ -87,8 +89,8 @@ export default class ProxyFactory {
                 sSock.removeAllListeners('timeout');
                 cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
                 sSock.write(head);
-                cSock.pipe(new this.Decryptor).pipe(sSock);
-                sSock.pipe(new this.Encryptor).pipe(cSock);
+                pipe(cSock, new this.Decryptor, sSock);
+                pipe(sSock, new this.Encryptor, cSock);
             })
             .on('error', (error) => {
                 cSock.end();
