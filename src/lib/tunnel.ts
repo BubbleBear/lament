@@ -70,7 +70,7 @@ export default class Tunnel {
                     request.abort();
                 })
                 .setTimeout(this.config.client.timeout, () => {
-                    request.emit('error', new Error('client timeout'));
+                    request.emit('error', new Error('client-server timeout'));
                 });
 
             request.flushHeaders();

@@ -25,9 +25,7 @@ export const client = http.createServer()
     .on('request', proxyFacotry.requestHandler)
     .on('connect', proxyFacotry.connectHandler)
     .on('clientError', (err, sock) => {
-        if (!err.syscall) {
-            console.log('CLIENT handler error: ', err);
-        }
+        console.log('CLIENT handler error: ', err);
         sock.destroy();
     })
     .listen(config.client.listen);
