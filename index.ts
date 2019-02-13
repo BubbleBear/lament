@@ -1,6 +1,10 @@
 #!/usr/bin/env node ./node_modules/ts-node/dist/bin.js
 
-import * as lament from './src';
+import client from './src/client';
+import server from './src/server';
+import config from './src/lib/config';
 
-lament.server;
-lament.client;
+config.verbose = true;
+
+server
+client

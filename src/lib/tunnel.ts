@@ -3,7 +3,7 @@ import * as net from 'net';
 
 import { promise, getHeaderString } from './utils';
 import { Encryptor, Decryptor, DefaultEncryptor, DefaultDecryptor } from './cypher';
-import Config from './config';
+import { Config } from './config';
 
 export interface RemoteOptions {
     host: string;

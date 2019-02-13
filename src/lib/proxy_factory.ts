@@ -5,7 +5,7 @@ import { parse } from 'url';
 import { verifyCertificates, pipe } from './utils';
 import { Encryptor, Decryptor, DefaultEncryptor, DefaultDecryptor } from './cypher';
 import Tunnel from './tunnel';
-import Config from './config';
+import { Config } from './config';
 
 export default class ProxyFactory {
     private config: Config;

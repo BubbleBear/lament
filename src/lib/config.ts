@@ -1,4 +1,4 @@
-export default interface Config {
+export interface Config {
     client: {
         listen: number;
         remotes: {
@@ -17,12 +17,22 @@ export default interface Config {
     [prop: string]: any;
 }
 
-export default class Config {
+let instance: Config;
+
+export class Config {
     constructor() {
-        return <any>this.merge(this.default(), this.custom());
+        return Config.singleton();
     }
 
-    private merge(obj1, obj2) {
+    private static singleton() {
+        if (instance instanceof Config === false) {
+            instance = this.merge(this.default(), this.custom());
+        }
+
+        return instance;
+    }
+
+    private static merge(obj1, obj2) {
         const merged = Object.assign({}, obj1, obj2);
         Object.keys(merged).forEach((k) => {
             typeof obj1[k] === 'object' && typeof obj2[k] === 'object'
@@ -35,7 +45,7 @@ export default class Config {
         return merged;
     }
 
-    private default() {
+    private static default() {
         return {
             client: {
                 listen: 6666,
@@ -55,7 +65,7 @@ export default class Config {
         };
     }
 
-    private custom() {
+    private static custom() {
         const config = {};
         try {
             (<any>config).client = require('../../config/client.json');
@@ -70,3 +80,7 @@ export default class Config {
         return config;
     }
 }
+
+const config = new Config;
+
+export default config;

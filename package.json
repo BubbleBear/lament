@@ -2,7 +2,7 @@
   "name": "lament",
   "version": "1.0.0",
   "description": "a tunneling proxy based on connect method <pre> NOT STABLE ON WINDOWS PLATFORM YET!!",
-  "main": "client.js",
+  "main": "dist/lib/proxy_factory.js",
   "directories": {
     "test": "test"
   },
@@ -10,9 +10,9 @@
     "lament": "index.ts"
   },
   "scripts": {
-    "start": "supervisor -e ts,js,json -x ts-node -- src",
-    "debug": "node --inspect ./node_modules/ts-node/dist/bin.js src",
-    "dev": "supervisor -w src,config -e ts,js,json -x ts-node -- src"
+    "start": "supervisor -e ts,js,json -x ts-node -- index.ts",
+    "debug": "node --inspect ./node_modules/ts-node/dist/bin.js index.ts",
+    "dev": "supervisor -w src,config -e ts,js,json -x ts-node -- index.ts"
   },
   "repository": {
     "type": "git",
