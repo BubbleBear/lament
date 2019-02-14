@@ -54,6 +54,10 @@ export default class Tunnel {
                         .on('end', () => {
                             socket.end();
                         })
+                        .on('error', (error) => {
+                            console.log('dig error: ', error)
+                            socket.destroy();
+                        })
                         .on('pipe', (src: net.Socket) => {
                             request.removeAllListeners('timeout');
                             if (req.method !== 'CONNECT') {

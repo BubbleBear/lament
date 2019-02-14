@@ -32,8 +32,6 @@ export default class ProxyFactory {
             cSock
                 .on('end', () => {
                     cSock.end();
-                })
-                .on('close', () => {
                     sSock.end();
                 })
                 .on('error', (error) => {
@@ -91,18 +89,20 @@ export default class ProxyFactory {
         const path = (new this.Decryptor).decode(encodedPath);
         const options = parse(path.indexOf('http') ? 'http://' + path : path);
 
-        const cert: boolean = await verifyCertificates(options);
+        const cert: Promise<boolean> = verifyCertificates(options);
 
         const sSock = (new net.Socket)
             .on('end', () => {
                 sSock.end();
             })
-            .on('connect', () => {
-                sSock.removeAllListeners('timeout');
-                cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-                sSock.write(head);
-                pipe(cSock, new this.Decryptor, sSock);
-                pipe(sSock, new this.Encryptor, cSock);
+            .on('connect', async () => {
+                if (await cert) {
+                    sSock.removeAllListeners('timeout');
+                    cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+                    sSock.write(head);
+                    pipe(cSock, new this.Decryptor, sSock);
+                    pipe(sSock, new this.Encryptor, cSock);
+                }
             })
             .on('error', (error) => {
                 cSock.end();
@@ -111,6 +111,10 @@ export default class ProxyFactory {
             })
             .setTimeout(this.config.server.timeout, () => {
                 sSock.emit('error', new Error(`server timeout, host: ${path}`));
+            })
+            .connect({
+                host: options.hostname,
+                port: Number(options.port) || 80,
             });
 
         cSock
@@ -121,12 +125,5 @@ export default class ProxyFactory {
                 cSock.destroy();
                 this.config.verbose && console.log(`client-server socket error: ${error.message}`);
             });
-
-        if (cert === true) {
-            sSock.connect({
-                host: options.hostname,
-                port: Number(options.port) || 80,
-            });
-        }
     }
 }

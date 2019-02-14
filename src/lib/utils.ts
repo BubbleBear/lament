@@ -3,6 +3,8 @@ import { connect, TLSSocket } from 'tls';
 import { parse } from 'url';
 import { Readable, Writable, Duplex } from 'stream';
 
+import config from './config';
+
 export const promise = {
     or<T>(promises: Promise<T>[]): Promise<T> {
         return new Promise((resolve, reject) => {
@@ -35,14 +37,16 @@ export async function verifyCertificates(url: { hostname, port} | Url): Promise<
         
         socket
             .on('error', (error) => {
-                resolve(true);
+                reject(error);
                 socket.destroy();
             })
-            .setTimeout(1500)
-            .end('hello');
+            .setTimeout(config.server.timeout, () => {
+                resolve(false);
+                socket.emit('error', new Error('certification timeout'));
+            });
     })
     .catch((error) => {
-        console.log('failed verifying certificates: ', error);
+        config.verbose && console.log('failed verifying certificates: ', error);
         return true;
     });
 }
@@ -75,25 +79,18 @@ type Head = Readable | Duplex;
 
 type Rest = Writable | Duplex;
 
-export function pipe(src: Head | PipeWrapper<Head>,
-    ...rest: (Rest | PipeWrapper<Rest>)[]) {
-    for (let srcIdx = 0; srcIdx < arguments.length - 1; srcIdx++) {
-        const srcPkg = arguments[srcIdx];
-        const dstPkg = arguments[srcIdx + 1];
+export function pipe(head: Head | PipeWrapper<Head>, ...rest: (Rest | PipeWrapper<Rest>)[]) {
+    [head, ...rest].reduce((srcPkg: any, dstPkg: any, _, chain) => {
+        const src: Head = srcPkg && !(srcPkg instanceof Readable) && srcPkg.stream || srcPkg;
+        const dst: Rest = dstPkg && !(dstPkg instanceof Writable) && dstPkg.stream || dstPkg;
 
-        const src: Head = srcPkg instanceof Readable ? srcPkg : srcPkg.stream;
-        const dst: Rest = dstPkg instanceof Writable ? dstPkg : dstPkg.stream;
+        dst.on('error', (error) => {
+            console.log('pipe error: ', error)
+            chain.forEach((stream: PipeWrapper<any>) => {
+                (stream.stream || stream).destroy();
+            });
+        });
 
-        src
-            .on('close', () => {
-                dst && dst.destroy();
-            })
-
-        dst
-            .on('close', () => {
-                src && src.destroy();
-            })
-
-        src.pipe(dst, dstPkg.options);
-    }
+        return src && src.pipe(dst, dstPkg.options) || dst;
+    }, null);
 }
