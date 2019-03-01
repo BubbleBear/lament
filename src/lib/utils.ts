@@ -85,7 +85,6 @@ export function pipe(head: Head | PipeWrapper<Head>, ...rest: (Rest | PipeWrappe
         const dst: Rest = dstPkg && !(dstPkg instanceof Writable) && dstPkg.stream || dstPkg;
 
         dst.on('error', (error) => {
-            console.log('pipe error: ', error)
             chain.forEach((stream: PipeWrapper<any>) => {
                 (stream.stream || stream).destroy();
             });

@@ -11,8 +11,10 @@
   },
   "scripts": {
     "start": "supervisor -e ts,js,json -x ts-node -- index.ts",
-    "debug": "node --inspect ./node_modules/ts-node/dist/bin.js index.ts",
-    "dev": "supervisor -w src,config -e ts,js,json -x ts-node -- index.ts"
+    "debug": "node --inspect -r ts-node/register index.ts",
+    "dev": "supervisor -w src,config -e ts,js,json -- --inspect=9225 -r ts-node/register index.ts",
+    "dev-server": "supervisor -w src,config -e ts,js,json -- --inspect=9222 -r ts-node/register src/server.ts",
+    "dev-client": "supervisor -w src,config -e ts,js,json -- --inspect=9229 -r ts-node/register src/client.ts"
   },
   "repository": {
     "type": "git",

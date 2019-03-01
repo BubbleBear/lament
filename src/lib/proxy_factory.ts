@@ -110,7 +110,7 @@ export default class ProxyFactory {
                 this.config.verbose && console.log(`server-destination socket error: ${error.message}`);
             })
             .setTimeout(this.config.server.timeout, () => {
-                sSock.emit('error', new Error(`server timeout, host: ${path}`));
+                sSock.emit('error', new Error(`server-destination timeout, host: ${path}`));
             })
             .connect({
                 host: options.hostname,
@@ -118,12 +118,13 @@ export default class ProxyFactory {
             });
 
         cSock
-            .on('end', () => {
-                cSock.end();
-            })
             .on('error', (error) => {
                 cSock.destroy();
+                sSock.end();
                 this.config.verbose && console.log(`client-server socket error: ${error.message}`);
+            })
+            .setTimeout(this.config.server.timeout, () => {
+                cSock.emit('error', new Error(`server-client timeout`));
             });
     }
 }
