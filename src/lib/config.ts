@@ -60,7 +60,7 @@ export class Config {
             },
             server: {
                 listen: 5555,
-                timeout: 3000,
+                timeout: 30000,
             },
         };
     }

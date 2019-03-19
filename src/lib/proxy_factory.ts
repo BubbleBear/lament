@@ -89,7 +89,8 @@ export default class ProxyFactory {
         const path = (new this.Decryptor).decode(encodedPath);
         const options = parse(path.indexOf('http') ? 'http://' + path : path);
 
-        const cert: Promise<boolean> = verifyCertificates(options);
+        // const cert: Promise<boolean> = verifyCertificates(options);
+        const cert = true;
 
         const sSock = (new net.Socket)
             .on('end', () => {
